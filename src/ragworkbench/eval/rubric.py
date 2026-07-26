@@ -21,12 +21,22 @@ from ragworkbench.eval.types import (
 # v0.1 retrieval-focused rubric. Thresholds anchored on the shipped MS MARCO baselines
 # (BM25 recall@10 ~0.898, MRR ~0.44, nDCG ~0.55; +rerank ~0.977/0.63/0.72 in v0.2).
 DEFAULT_RUBRIC: list[RubricDimension] = [
-    RubricDimension("ranking_recall", "retrieval_recall", 0.85, 0.30, "recall@10 CI lower bound"),
-    RubricDimension("ranking_mrr", "retrieval_mrr", 0.40, 0.20, "MRR@10 CI lower bound"),
-    RubricDimension("ranking_ndcg", "retrieval_ndcg", 0.55, 0.20, "nDCG@10 CI lower bound"),
-    RubricDimension("ranking_precision", "retrieval_precision", 0.20, 0.10, "precision@10 CI lower bound"),
-    RubricDimension("ranking_hit", "retrieval_hit", 0.85, 0.20, "hit-rate@10 CI lower bound"),
+    # Generation dims (Mode B, v0.4) -- heaviest weight on faithfulness (anti-hallucination).
+    RubricDimension("faithfulness", "faithfulness", 0.80, 0.18, "claim-decomposition NLI coverage"),
+    # Ranking is one 9-dim dimension (weight 0.17), split across recall/mrr/ndcg.
+    RubricDimension("ranking_recall", "retrieval_recall", 0.85, 0.08, "recall@10 CI lower bound"),
+    RubricDimension("ranking_mrr", "retrieval_mrr", 0.40, 0.05, "MRR@10 CI lower bound"),
+    RubricDimension("ranking_ndcg", "retrieval_ndcg", 0.55, 0.04, "nDCG@10 CI lower bound"),
+    RubricDimension("answer_correctness", "answer_correctness", 0.75, 0.13, "factual correctness vs gold answer"),
+    RubricDimension("abstention", "abstention", 0.80, 0.09, "OOS negative rejection"),
+    # Infra dims -- NA in v0.4 (no scorer populates them); declared for the full 9-dim report.
+    RubricDimension("ingestion_fidelity", "ingestion_fidelity", 1.0, 0.10, "parser/chunker fidelity (infra; NA)"),
+    RubricDimension("noise_robustness", "noise", 0.80, 0.09, "noise-injection delta (needs fixture; NA)"),
+    RubricDimension("robustness", "robustness", 1.0, 0.08, "graceful degradation (infra; NA)"),
+    RubricDimension("performance", "performance", 1.0, 0.08, "p95 latency / cost (infra; NA)"),
 ]
+# Confidence (0.08) is the separate min_n check in evaluate_rubric, not a metric dim.
+# Weights sum to 0.92 across the 10 metric dims + 0.08 confidence = 1.00.
 
 DEFAULT_MIN_N = 120  # below this a CI is too wide to be defensible; the gate hard-fails
 

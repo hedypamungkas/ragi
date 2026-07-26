@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rag-workbench"
-version = "0.3.0"
+version = "0.4.0"
 description = "Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -85,6 +85,22 @@ def load_msmarco(qrels_path: str | Path = DEFAULT_MSMARCO_QRELS, *, corpus_dir: 
     return ds
 
 
+DEFAULT_TYDI_ID_QRELS = "evals/fixtures/id_native_qrels.json"
+
+
+def load_tydi_id(qrels_path: str | Path = DEFAULT_TYDI_ID_QRELS, *, corpus_dir: str | None = None) -> GoldenDataset:
+    """Load the native Indonesian golden set from TyDi QA (``scripts/build_id_native_corpus.py``).
+
+    Schema matches MS MARCO (``{query, gold_doc, gold_needles, expected_answer}``) -- natively
+    collected (not translated), so the per-language ID claim is caveat-free.
+    """
+    ds = load_dataset_json(qrels_path)
+    ds.name = "tydi-id"
+    if corpus_dir:
+        ds.corpus_dir = corpus_dir
+    return ds
+
+
 # --- synthetic fixture (offline, no download) ------------------------------
 
 # A tiny inline corpus + qrels so the closed loop runs with zero network/zero API key.
@@ -164,6 +180,8 @@ def resolve_dataset(
         return synthetic_fixture()
     if name == "msmarco":
         return load_msmarco(qrels_path or DEFAULT_MSMARCO_QRELS, corpus_dir=corpus_dir)
+    if name in ("tydi-id", "tydi_id", "tydi"):
+        return load_tydi_id(qrels_path or DEFAULT_TYDI_ID_QRELS, corpus_dir=corpus_dir)
     if name in ("byo", "json"):
         if not qrels_path:
             raise ValueError("dataset 'byo' requires --qrels PATH")

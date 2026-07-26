@@ -93,12 +93,33 @@ def cmd_eval(args: argparse.Namespace) -> int:
     metric_names = [
         m for m in (args.metrics.split(",") if args.metrics else "recall,mrr,ndcg,precision,hit".split(","))
     ]
-    runner = StandaloneEvalRunner(metrics=tuple(metric_names), k=args.k)
-    report = asyncio.run(runner.run(retriever, dataset, n=args.n))
+    if args.mode == "end_to_end":
+        report = asyncio.run(_run_end_to_end(retriever, dataset, args, metric_names))
+    else:
+        runner = StandaloneEvalRunner(metrics=tuple(metric_names), k=args.k)
+        report = asyncio.run(runner.run(retriever, dataset, n=args.n))
     print(format_report(report, show_cases=args.show_cases))
     if args.strict:
         return 0 if report.rubric.overall_pass else 1
     return 0
+
+
+async def _run_end_to_end(retriever, dataset, args, metric_names):
+    """Mode B: build an OpenAIChatClient from env + run the EndToEndEvalRunner."""
+    import os
+
+    from ragworkbench.chat.openai import OpenAIChatClient
+    from ragworkbench.eval.faithfulness import FaithfulnessScorer
+    from ragworkbench.eval.generation_scorers import AbstentionScorer, AnswerCorrectnessScorer
+    from ragworkbench.eval.runner import EndToEndEvalRunner
+
+    key = os.environ.get("OPENAI_API_KEY", "")
+    if not key:
+        raise SystemExit("ERROR: --mode end_to_end requires OPENAI_API_KEY")
+    chat = OpenAIChatClient(api_key=key, model=args.chat_model, base_url=os.environ.get("OPENAI_BASE_URL") or None)
+    scorers = [FaithfulnessScorer(chat), AnswerCorrectnessScorer(chat), AbstentionScorer()]
+    runner = EndToEndEvalRunner(chat, scorers, metrics=tuple(metric_names), k=args.k)
+    return await runner.run(retriever, dataset, n=args.n)
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
@@ -159,6 +180,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_eval.add_argument("-n", type=int, default=None, help="subsample N qrels")
     p_eval.add_argument("-k", type=int, default=10, help="top_k for retrieval")
     p_eval.add_argument("--metrics", default=None, help="comma list: recall,mrr,ndcg,precision,hit")
+    p_eval.add_argument(
+        "--mode",
+        choices=["retrieval", "end_to_end"],
+        default="retrieval",
+        help="retrieval-only (Mode A, no key) or end-to-end (Mode B, needs OPENAI_API_KEY)",
+    )
+    p_eval.add_argument("--chat-model", default="gpt-4o-mini", help="chat/judge model for --mode end_to_end")
     p_eval.add_argument("--show-cases", type=int, default=3, help="print first N per-case rows")
     p_eval.add_argument("--strict", action="store_true", help="exit 1 if rubric FAILs (CI gate)")
     p_eval.set_defaults(func=cmd_eval)

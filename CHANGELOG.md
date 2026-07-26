@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
+## [0.4.0] - 2026-07-26
+
+### Added — production-readiness depth (Mode B + full 9-dim rubric + TyDi-id)
+- **Mode B end-to-end eval** (`EndToEndEvalRunner`): retrieve → generate via `ChatClient` → judge.
+  Answer-quality scorers:
+  - `eval/faithfulness.py` — `FaithfulnessScorer` via **NLI claim-decomposition** (decompose →
+    batch-NLI → coverage), adapted from koboi's `GroundingGuardrail` — **not RAGAS** (the doc
+    indicts RAGAS for gateway multi-gen stalling). 2 side-LLM calls/answer; fail-soft.
+  - `eval/generation_scorers.py` — `AnswerCorrectnessScorer` (judge + deterministic substring
+    fallback) + `AbstentionScorer` (OOS refusal detection).
+  - `eval/mock_chat.py` — `MockChatClient` for zero-key Mode B tests.
+- **Full 9-dimension rubric** (`eval/rubric.py`): faithfulness 0.18 / ranking 0.17
+  (recall+mrr+ndcg) / correctness 0.13 / abstention 0.09 / noise 0.09 + infra dims
+  (ingestion/robustness/perf) NA + confidence (min_n). Weights from the production-readiness doc.
+- **TyDi-id native Indonesian baseline** (`scripts/build_id_native_corpus.py` + `resolve_dataset("tydi-id")`):
+  natively-collected (NOT translated) — closes the translation-inflation caveat. Apache-2.0 qrels.
+- **`chat/openai.py`** — `OpenAIChatClient` (OpenAI-compatible gateway) for Mode B. CLI
+  `ragwb eval --mode retrieval|end_to_end` (+ `--chat-model`).
+- +22 tests (97 total, ruff clean): faithfulness claim-decomp + normalization + fail-soft,
+  correctness judge/fallback, abstention, end-to-end Mode B over synthetic, 9-dim rubric weights,
+  TyDi-id loader.
+
+### Notes
+- Mode B needs `OPENAI_API_KEY` (live); mock-based tests cover the wiring. Documented:
+  `OPENAI_API_KEY=... ragwb eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120`
+  → full 9-dim report with live faithfulness/correctness.
+- Native-ID BM25 recall@10 = **0.967** [0.867, 1.000] on TyDi-id (n=30) — the caveat-free ID baseline.
+- Noise/ingestion/robustness/perf dims stay NA (need a noise fixture / infra harness — fast-follow).
+- faiss + SemanticChunker deferred to v0.5 (backend-breadth slice).
+
 ## [0.3.0] - 2026-07-26
 
 ### Added — ship as a portable retrieval contract

@@ -53,15 +53,15 @@ results = await retriever.retrieve("what is photosynthesis?", top_k=5)
 
 ## Status
 
-Alpha (v0.3). Phased roadmap — each slice ships a working closed loop + measured baseline:
+Alpha (v0.4). Phased roadmap — each slice ships a working closed loop + measured baseline:
 
 | Slice | Ships |
 |---|---|
 | **v0.1** ✅ | lexical retrieval (keyword/BM25) + retrieval-only eval (recall@k / MRR / nDCG / precision + bootstrap CI) + A/B compare + 9-dim rubric |
 | **v0.2** ✅ | semantic/hybrid + cross-encoder rerank (jina/cohere/local) + query-rewrite/HyDE + augmentation seam — all as composable Retriever wrappers |
 | **v0.3** ✅ | MCP server export (read-only) + tool-schema (MCP/OpenAI/Anthropic) + LangChain/LlamaIndex adapters |
-| v0.4 | end-to-end eval (faithfulness) + full 9-dim rubric + faiss + TyDi-id native |
-| v0.5 | chroma/pgvector + OpenAI/Claude adapters + s3/firecrawl sources |
+| **v0.4** ✅ | Mode B end-to-end eval (faithfulness NLI) + full 9-dim rubric + TyDi-id native baseline |
+| v0.5 | faiss/chroma/pgvector + SemanticChunker + s3/firecrawl + OpenAI/Claude tool adapters |
 
 ## Ship to any agent (v0.3)
 
@@ -101,6 +101,25 @@ from ragworkbench.adapters.langchain import LangChainRetrieverAdapter
 lc = LangChainRetrieverAdapter(rwb_retriever=retriever, top_k=5)
 docs = lc.invoke("your query")   # -> list[langchain_core.documents.Document]
 ```
+
+## Measure answer quality (v0.4 — Mode B)
+
+Mode A measures **retrieval**; Mode B measures the **answer** — is it faithful (grounded, not
+hallucinated), correct, and does it abstain on out-of-scope queries?
+
+```bash
+# needs OPENAI_API_KEY (Mode B generates + judges answers via a chat model)
+OPENAI_API_KEY=... ragwb eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120
+```
+
+Faithfulness uses **NLI claim-decomposition** (decompose the answer into atomic claims, NLI-check
+each vs the retrieved context → coverage ratio) — not RAGAS, which stalls on OpenAI-compatible
+gateways. Production targets: faithfulness ≥ 0.8, answer-correctness ≥ 0.75. The full **9-dimension
+rubric** weights faithfulness highest (0.18) > ranking (0.17) > correctness (0.13) > …
+
+**TyDi-id native Indonesian baseline** (`--dataset tydi-id`, Mode A needs no key): natively-collected
+(not machine-translated) — BM25 recall@10 ≈ 0.97. Closes the translation-inflation caveat; the
+SEA-aware differentiator.
 
 ## Design
 
