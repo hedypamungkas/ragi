@@ -1,5 +1,9 @@
 # ragi
 
+[![CI](https://github.com/hedypamungkas/ragi/actions/workflows/ci.yml/badge.svg)](https://github.com/hedypamungkas/ragi/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+
 > ***Retrieval that rises.*** — named for the **sourdough starter** (*ragi*, Indonesian): a
 > living culture you **cultivate**, **measure before you bake**, and **share**. Tend your RAG the
 > same way — feed it data, measure it honestly, then ship the tuned stack to any agent.
@@ -19,8 +23,10 @@ its framework. ragi closes the loop the other way: eval is the spine, the stack
 is portable, and a **lexical-only baseline runs the entire closed loop with zero API
 key** — measure your retrieval quality for free *before* paying for embeddings.
 
-Shipped baselines (bundled MS MARCO golden set): BM25 recall@10 = **0.898 → 0.977**
-with a jina cross-encoder rerank. These are CI-gated regression bars, not vibes.
+Reproducible baselines on a real MS MARCO golden set (built locally via one script;
+HF-cached, license-light): BM25 recall@10 ≈ **0.82–0.90** lexical, climbing to **~0.98**
+with a jina cross-encoder rerank (that step needs a `JINA_API_KEY`). Numbers you reproduce
+yourself with `ragi eval` — measured, not vibes.
 
 ## Install
 
@@ -145,8 +151,9 @@ ragi.build_pipeline({
 merge), **s3/firecrawl** sources (`[rag-cloud]`), and **OpenAI/Claude SDK tool-call adapters**
 (`adapters/openai.py` + `adapters/anthropic.py` — for non-MCP SDK agents) round out the stack.
 
-v0.5 is the **capstone** — all 5 roadmap slices shipped. Next: v1.0 polish/release (CI, packaging,
-docs site).
+v0.5 is the **capstone** — all 5 roadmap slices shipped. **v1.0** then added the trust layer:
+CI gates (ruff / format / coverage / bandit / pip-audit), packaging, and dev docs. See
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Design
 
