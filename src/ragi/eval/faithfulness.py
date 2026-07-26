@@ -80,10 +80,11 @@ def _extract_content(item) -> str:
 def _parse_json_list(text: str) -> list[str]:
     try:
         data = json.loads(text)
-        if isinstance(data, list):
-            return [str(x) for x in data]
-    except Exception:  # noqa: BLE001
-        pass
+    except (json.JSONDecodeError, TypeError, ValueError):
+        # malformed model JSON -> no claims extractable (fail-soft, empty list downstream)
+        return []
+    if isinstance(data, list):
+        return [str(x) for x in data]
     return []
 
 

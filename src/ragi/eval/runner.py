@@ -63,7 +63,7 @@ class StandaloneEvalRunner:
         """Run all scorers over the dataset (optionally subsampled to ``n`` qrels)."""
         qrels = list(dataset.qrels)
         if n is not None and 0 < n < len(qrels):
-            qrels = random.Random(self.seed).sample(qrels, n)
+            qrels = random.Random(self.seed).sample(qrels, n)  # nosec B311 - seeded eval subsampling, reproducible not cryptographic
 
         per_metric: dict[str, list[float]] = {f"retrieval_{m}": [] for m in self.metrics}
         per_case: list[CaseResult] = []
@@ -201,7 +201,7 @@ class EndToEndEvalRunner:
         """Run retrieval + generation + scoring over the dataset (optionally subsampled to ``n``)."""
         qrels = list(dataset.qrels)
         if n is not None and 0 < n < len(qrels):
-            qrels = random.Random(self.seed).sample(qrels, n)
+            qrels = random.Random(self.seed).sample(qrels, n)  # nosec B311 - seeded eval subsampling, reproducible not cryptographic
 
         per_metric: dict[str, list[float]] = {f"retrieval_{m}": [] for m in self.metrics}
         for sc in self.scorers:

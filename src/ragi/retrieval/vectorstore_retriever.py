@@ -42,8 +42,7 @@ class VectorStoreRetriever(BaseRetriever):
         if not self._indexed:
             if self._store is None:
                 raise ValueError(
-                    "VectorStoreRetriever needs a store; build one via "
-                    "ragi.vectorstore.build_store(config, embedder)"
+                    "VectorStoreRetriever needs a store; build one via ragi.vectorstore.build_store(config, embedder)"
                 )
             await self._store.add(self._chunks)
             self._indexed = True

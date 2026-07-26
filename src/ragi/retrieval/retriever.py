@@ -75,8 +75,7 @@ def _normalize_stemmer(stemmer: str | bool | None) -> Callable[[str], str] | Non
             )
         except ImportError:
             _logger.warning(
-                "stemmer 'id' needs the [indo-nlp] extra (Sastrawi): "
-                "pip install 'ragi[indo-nlp]'. Skipping stemming."
+                "stemmer 'id' needs the [indo-nlp] extra (Sastrawi): pip install 'ragi[indo-nlp]'. Skipping stemming."
             )
             return None
 

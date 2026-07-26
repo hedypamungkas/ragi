@@ -36,7 +36,7 @@ async def compare(
     """Compare two retrieval stacks on one metric; report the paired delta + its bootstrap CI."""
     qrels = list(dataset.qrels)
     if n is not None and 0 < n < len(qrels):
-        qrels = random.Random(seed).sample(qrels, n)
+        qrels = random.Random(seed).sample(qrels, n)  # nosec B311 - seeded eval subsampling, reproducible not cryptographic
 
     values_a: list[float] = []
     values_b: list[float] = []
