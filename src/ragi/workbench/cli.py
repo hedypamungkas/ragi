@@ -166,6 +166,7 @@ def cmd_export_tool_schema(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ragi", description="ragi closed-loop CLI")
+    ap.add_argument("--version", action="version", version=f"ragi {ragi.__version__}")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p_ingest = sub.add_parser("ingest", help="validate config + index corpus + probe")
