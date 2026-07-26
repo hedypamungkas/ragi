@@ -1,9 +1,16 @@
-name: Release (build-only)
+name: Release
 
-# Build sdist + wheel on a `v*` tag. PyPI PUBLISH IS INTENTIONALLY DEFERRED -- ragi
-# is not on PyPI yet. When cutting a real release, add a `publish` job:
-#   needs: build, permissions: {id-token: write}, environment: pypi,
-#   uses: pypa/gh-action-pypi-publish@release/v1 with attestations: true  (OIDC trusted publishing)
+# Build sdist + wheel on a `v*` tag, then publish to PyPI via OIDC trusted
+# publishing (no long-lived API token). ONE-TIME PyPI-side prerequisite: register
+# this repo as a trusted publisher at https://pypi.org/manage/account/publishing/
+#   PyPI project name : ragi
+#   GitHub owner      : hedypamungkas
+#   Repository        : ragi
+#   Workflow filename : release.yml
+#   Environment       : pypi
+# A "pending publisher" works for a project that does not exist yet -- the first
+# release creates it. Until that publisher is registered, the publish job 403s,
+# which is expected on the first tag before the link is in place.
 
 on:
   push:
@@ -27,3 +34,18 @@ jobs:
         with:
           name: dist
           path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # OIDC trusted publishing -- no API token stored.
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
