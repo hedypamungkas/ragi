@@ -10,8 +10,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Rebrand — rag-workbench → ragi
 **ragi** (sourdough starter; *"Retrieval that rises."*) is the new identity for rag-workbench —
-the same mature code (the v0.1–v0.5 feature arc + v1.0 productionization), under a PyPI-free
-name. Import `ragi`, CLI `ragi` (was `ragwb`), adapter kwarg `ragi_retriever` (was `rwb_retriever`).
+the same mature code (the v0.1–v0.5 feature arc + v1.0 productionization). Import `ragi`,
+CLI `ragi` (was `ragwb`), adapter kwarg `ragi_retriever` (was `rwb_retriever`). **PyPI
+distribution name: `ragi-toolkit`** (`pip install ragi-toolkit` → `import ragi`) — the bare
+`ragi` is blocked by PyPI's confusable-name check (too similar to an existing `ragl`); the
+repo, package, CLI, and import all stay `ragi`.
 The sourdough metaphor maps the eval-first loop one-to-one: a starter is cultivated (iterate),
 measured before you bake (eval-first), makes dough rise (augmentation), and is shared (ship to any agent).
 
@@ -25,13 +28,14 @@ measured before you bake (eval-first), makes dough rise (augmentation), and is s
   Total ~64%, gated at 60% (ratcheting).
 - **`[tool.*]` config**: `[tool.mypy]` (lenient: `ignore_missing_imports` + `no_strict_optional`),
   `[tool.bandit]` (skip B608 SQL false-positive). `mypy/bandit/pip-audit/build` added to `[dev]`.
-- **Release** (`.github/workflows/release.yml`): build sdist+wheel on `v*` tag (artifact upload).
-  PyPI publish deferred (not published yet).
+- **Release** (`.github/workflows/release.yml`): build sdist+wheel on `v*` tag, then publish to
+  PyPI as **`ragi-toolkit`** via OIDC trusted publishing (no stored token; needs a one-time
+  trusted-publisher registration on pypi.org).
 - **Dev docs**: `CONTRIBUTING.md` (5 local gates + extension recipes) + `.github/SECURITY.md`
   (private-advisory + SLA) + `.github/PULL_REQUEST_TEMPLATE.md` + `.github/dependabot.yml` +
   `docs/architecture.md`.
-- **Build verified**: `python -m build` → `ragi-1.0.0.{tar.gz,whl}`; console-script
-  `ragi` resolves.
+- **Build verified**: `python -m build` → `ragi_toolkit-1.0.0.{tar.gz,whl}`; console-script
+  `ragi` resolves (distribution name `ragi-toolkit` → wheel filename `ragi_toolkit`).
 
 ### Notes
 - mypy is SOFT by design (Protocol/TYPE_CHECKING noise; koboi itself only stays green via lenient
@@ -121,7 +125,7 @@ measured before you bake (eval-first), makes dough rise (augmentation), and is s
   over MCP; lexical + rerank configs serve directly. HTTP transport is localhost/no-auth
   (production remote needs a Bearer reverse-proxy, documented).
 - llama-index is heavy and not installed in CI → the LlamaIndex adapter is import-gate-tested
-  only; validate with `pip install 'ragi[adapters-llamaindex]'` when adopting.
+  only; validate with `pip install 'ragi-toolkit[adapters-llamaindex]'` when adopting.
 
 ## [0.2.0] - 2026-07-26
 

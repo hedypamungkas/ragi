@@ -31,7 +31,14 @@ yourself with `ragi eval` — measured, not vibes.
 ## Install
 
 ```bash
-pip install -e ".[dev,parsers]"     # core + tests + text/html/pdf/docx parsers
+pip install ragi-toolkit                  # core, from PyPI  ->  import ragi
+pip install "ragi-toolkit[mcp,parsers]"   # + MCP server + text/html/pdf/docx parsers
+```
+
+From source (contributors):
+
+```bash
+pip install -e ".[dev,parsers]"           # editable + tests + linters
 ```
 
 ## Quickstart (v0.1 closed loop — no API key)
@@ -82,7 +89,7 @@ A tuned stack becomes a portable retrieval contract three ways:
 **1. MCP server** (Claude Desktop / Cursor / any MCP client) — one read-only `search` tool:
 
 ```bash
-pip install -e ".[mcp]"
+pip install "ragi-toolkit[mcp]"
 ragi serve configs/bm25_baseline.yaml --transport stdio
 ```
 
@@ -108,7 +115,7 @@ ragi export-tool-schema --format openai      # or: mcp | anthropic | base
 **3. Framework adapters** (LangChain / LlamaIndex):
 
 ```python
-# pip install -e ".[adapters-langchain]"
+# pip install "ragi-toolkit[adapters-langchain]"
 from ragi.adapters.langchain import LangChainRetrieverAdapter
 lc = LangChainRetrieverAdapter(ragi_retriever=retriever, top_k=5)
 docs = lc.invoke("your query")   # -> list[langchain_core.documents.Document]

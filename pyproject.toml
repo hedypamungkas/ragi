@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ragi"
+name = "ragi-toolkit"
 version = "1.0.0"
 description = "ragi — Retrieval that rises. Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
 readme = "README.md"
