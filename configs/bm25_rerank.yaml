@@ -1,6 +1,6 @@
 # BM25 + Jina cross-encoder rerank (the hosted "beats the baseline" stack).
 # Target: recall@10 ~0.977 (vs ~0.82 BM25-only). Needs a JINA_API_KEY.
-# Run:  JINA_API_KEY=... ragwb eval configs/bm25_rerank.yaml --dataset msmarco -n 300
+# Run:  JINA_API_KEY=... ragi eval configs/bm25_rerank.yaml --dataset msmarco -n 300
 enabled: true
 chunker: paragraph
 retriever: bm25

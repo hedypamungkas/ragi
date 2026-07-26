@@ -1,5 +1,5 @@
 # BM25 baseline stack (the shipped MS MARCO reference: recall@10 ~0.898).
-# Run:  ragwb eval configs/bm25_baseline.yaml --dataset msmarco -n 120
+# Run:  ragi eval configs/bm25_baseline.yaml --dataset msmarco -n 120
 enabled: true
 chunker: paragraph
 retriever: bm25

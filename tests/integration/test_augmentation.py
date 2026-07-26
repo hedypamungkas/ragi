@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.retrieval.augmentation import (
+from ragi.retrieval.augmentation import (
     InMemoryAugmentation,
     OnTheFlyAugmentation,
 )
-from ragworkbench.retrieval.retriever import KeywordRetriever
-from ragworkbench.types import Chunk
+from ragi.retrieval.retriever import KeywordRetriever
+from ragi.types import Chunk
 
 CHUNKS = [Chunk("c1", "d1", "the refund policy allows 30 days", metadata={"source": "policy"})]
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ragworkbench.eval.metrics import (
+from ragi.eval.metrics import (
     compute_ranking_metric,
     ndcg_at_k,
     precision_at_k,

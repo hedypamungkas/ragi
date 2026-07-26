@@ -1,4 +1,4 @@
-# rag-workbench architecture
+# ragi architecture
 
 **Eval-first, agent-agnostic RAG toolkit.** The closed loop:
 

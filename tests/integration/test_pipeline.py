@@ -5,15 +5,15 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import ragworkbench as rwb
+import ragi
 
 
 async def test_build_pipeline_over_temp_corpus_ranks_gold_first():
-    rwb.register_builtins()
+    ragi.register_builtins()
     d = tempfile.mkdtemp()
     (Path(d) / "a.txt").write_text("the mitochondrion is the powerhouse of the cell", encoding="utf-8")
     (Path(d) / "b.txt").write_text("photosynthesis converts sunlight into chemical energy in plants", encoding="utf-8")
-    retriever = rwb.build_pipeline(
+    retriever = ragi.build_pipeline(
         {"enabled": True, "chunker": "paragraph", "retriever": "bm25", "documents": [{"path": d}]}
     )
     assert retriever is not None
@@ -24,10 +24,10 @@ async def test_build_pipeline_over_temp_corpus_ranks_gold_first():
 
 
 async def test_build_pipeline_keyword_path():
-    rwb.register_builtins()
+    ragi.register_builtins()
     d = tempfile.mkdtemp()
     (Path(d) / "only.txt").write_text("a quick brown fox jumps over the lazy dog", encoding="utf-8")
-    retriever = rwb.build_pipeline(
+    retriever = ragi.build_pipeline(
         {"enabled": True, "chunker": "paragraph", "retriever": "keyword", "documents": [{"path": d}]}
     )
     results = await retriever.retrieve("quick fox", top_k=3)
@@ -35,11 +35,11 @@ async def test_build_pipeline_keyword_path():
 
 
 def test_build_pipeline_disabled_returns_none():
-    rwb.register_builtins()
-    assert rwb.build_pipeline({"enabled": False, "documents": []}) is None
+    ragi.register_builtins()
+    assert ragi.build_pipeline({"enabled": False, "documents": []}) is None
 
 
 def test_build_pipeline_missing_documents_returns_none():
-    rwb.register_builtins()
+    ragi.register_builtins()
     # enabled but no resolvable documents -> None (warns)
-    assert rwb.build_pipeline({"enabled": True, "documents": [{"path": "/no/such/dir/here"}]}) is None
+    assert ragi.build_pipeline({"enabled": True, "documents": [{"path": "/no/such/dir/here"}]}) is None

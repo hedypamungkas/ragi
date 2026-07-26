@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ragworkbench.eval.ci import bootstrap_ci
+from ragi.eval.ci import bootstrap_ci
 
 
 class TestBootstrapCI:

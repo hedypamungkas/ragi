@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.retrieval.retriever import KeywordRetriever
-from ragworkbench.retrieval.rewrite import (
+from ragi.retrieval.retriever import KeywordRetriever
+from ragi.retrieval.rewrite import (
     MockChatClient,
     QueryRewriter,
     RewritingRetriever,
     rule_based_rewrite,
 )
-from ragworkbench.types import Chunk
+from ragi.types import Chunk
 
 CHUNKS = [Chunk("c1", "d1", "python is a popular programming language")]
 

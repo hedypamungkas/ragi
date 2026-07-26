@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.eval.generation_scorers import (
+from ragi.eval.generation_scorers import (
     AbstentionScorer,
     AnswerCorrectnessScorer,
 )
-from ragworkbench.eval.mock_chat import MockChatClient
-from ragworkbench.eval.types import EvalCase
+from ragi.eval.mock_chat import MockChatClient
+from ragi.eval.types import EvalCase
 
 
 class TestAnswerCorrectness:

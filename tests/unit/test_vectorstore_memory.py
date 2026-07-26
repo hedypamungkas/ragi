@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.embeddings.mock import MockEmbeddingClient
-from ragworkbench.types import Chunk
-from ragworkbench.vectorstore.memory import InMemoryVectorStore
+from ragi.embeddings.mock import MockEmbeddingClient
+from ragi.types import Chunk
+from ragi.vectorstore.memory import InMemoryVectorStore
 
 CHUNKS = [
     Chunk("c1", "d1", "photosynthesis converts sunlight into energy", metadata={"source": "bio"}),

@@ -1,4 +1,4 @@
-"""Unit tests for the ``ragwb`` CLI subcommands (offline, no key).
+"""Unit tests for the ``ragi`` CLI subcommands (offline, no key).
 
 Exercises ingest / eval (Mode A, synthetic) / compare / export-tool-schema / serve(error) /
 end_to_end(no-key) via ``main([...])``. Covers ``workbench/cli.py`` end-to-end.
@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from ragworkbench.workbench.cli import main
+from ragi.workbench.cli import main
 
 BM25 = "configs/bm25_baseline.yaml"
 KEYWORD = "configs/keyword_baseline.yaml"

@@ -1,6 +1,6 @@
 name: Release (build-only)
 
-# Build sdist + wheel on a `v*` tag. PyPI PUBLISH IS INTENTIONALLY DEFERRED -- rag-workbench
+# Build sdist + wheel on a `v*` tag. PyPI PUBLISH IS INTENTIONALLY DEFERRED -- ragi
 # is not on PyPI yet. When cutting a real release, add a `publish` job:
 #   needs: build, permissions: {id-token: write}, environment: pypi,
 #   uses: pypa/gh-action-pypi-publish@release/v1 with attestations: true  (OIDC trusted publishing)

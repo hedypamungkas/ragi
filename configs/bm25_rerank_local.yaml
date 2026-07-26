@@ -1,7 +1,7 @@
 # BM25 + local BGE cross-encoder rerank (no API key, no egress). Needs the extra:
 #   pip install -e ".[rerank-local]"   # pulls sentence-transformers + torch
 # First run downloads BAAI/bge-reranker-v2-m3 (~500MB).
-# Run:  ragwb eval configs/bm25_rerank_local.yaml --dataset msmarco -n 120
+# Run:  ragi eval configs/bm25_rerank_local.yaml --dataset msmarco -n 120
 enabled: true
 chunker: paragraph
 retriever: bm25

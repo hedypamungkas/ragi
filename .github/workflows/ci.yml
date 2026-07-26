@@ -21,7 +21,7 @@ jobs:
       - run: ruff format --check src/ tests/ scripts/
       # mypy is SOFT (continue-on-error): Protocol-heavy + TYPE_CHECKING code with a lenient
       # config. Promote to HARD once the type-clean backlog burns down (see CONTRIBUTING.md).
-      - run: mypy src/ragworkbench
+      - run: mypy src/ragi
         continue-on-error: true
 
   test:
@@ -40,7 +40,7 @@ jobs:
       - name: pytest (coverage gate on the Linux/3.12 cell only)
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-latest" ] && [ "${{ matrix.python-version }}" = "3.12" ]; then
-            pytest --cov=ragworkbench --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+            pytest --cov=ragi --cov-report=term-missing --cov-report=xml --cov-fail-under=60
           else
             pytest
           fi

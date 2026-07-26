@@ -1,12 +1,19 @@
 # Changelog
 
-All notable changes to rag-workbench.
+All notable changes to ragi.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
 ## [1.0.0] - 2026-07-27
+
+### Rebrand — rag-workbench → ragi
+**ragi** (sourdough starter; *"Retrieval that rises."*) is the new identity for rag-workbench —
+the same mature code (the v0.1–v0.5 feature arc + v1.0 productionization), under a PyPI-free
+name. Import `ragi`, CLI `ragi` (was `ragwb`), adapter kwarg `ragi_retriever` (was `rwb_retriever`).
+The sourdough metaphor maps the eval-first loop one-to-one: a starter is cultivated (iterate),
+measured before you bake (eval-first), makes dough rise (augmentation), and is shared (ship to any agent).
 
 ### Productionization (the trust layer — not a feature slice)
 - **CI gates** (`.github/workflows/ci.yml`): `ruff check` + `ruff format --check` (HARD) +
@@ -23,8 +30,8 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Dev docs**: `CONTRIBUTING.md` (5 local gates + extension recipes) + `.github/SECURITY.md`
   (private-advisory + SLA) + `.github/PULL_REQUEST_TEMPLATE.md` + `.github/dependabot.yml` +
   `docs/architecture.md`.
-- **Build verified**: `python -m build` → `rag_workbench-1.0.0.{tar.gz,whl}`; console-script
-  `ragwb` resolves.
+- **Build verified**: `python -m build` → `ragi-1.0.0.{tar.gz,whl}`; console-script
+  `ragi` resolves.
 
 ### Notes
 - mypy is SOFT by design (Protocol/TYPE_CHECKING noise; koboi itself only stays green via lenient
@@ -77,14 +84,14 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **TyDi-id native Indonesian baseline** (`scripts/build_id_native_corpus.py` + `resolve_dataset("tydi-id")`):
   natively-collected (NOT translated) — closes the translation-inflation caveat. Apache-2.0 qrels.
 - **`chat/openai.py`** — `OpenAIChatClient` (OpenAI-compatible gateway) for Mode B. CLI
-  `ragwb eval --mode retrieval|end_to_end` (+ `--chat-model`).
+  `ragi eval --mode retrieval|end_to_end` (+ `--chat-model`).
 - +22 tests (97 total, ruff clean): faithfulness claim-decomp + normalization + fail-soft,
   correctness judge/fallback, abstention, end-to-end Mode B over synthetic, 9-dim rubric weights,
   TyDi-id loader.
 
 ### Notes
 - Mode B needs `OPENAI_API_KEY` (live); mock-based tests cover the wiring. Documented:
-  `OPENAI_API_KEY=... ragwb eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120`
+  `OPENAI_API_KEY=... ragi eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120`
   → full 9-dim report with live faithfulness/correctness.
 - Native-ID BM25 recall@10 = **0.967** [0.867, 1.000] on TyDi-id (n=30) — the caveat-free ID baseline.
 - Noise/ingestion/robustness/perf dims stay NA (need a noise fixture / infra harness — fast-follow).
@@ -95,11 +102,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added — ship as a portable retrieval contract
 - **MCP server** (`export/mcp.py`, `[mcp]` extra): expose a tuned Retriever as a read-only
   `search` tool via the official `mcp` SDK (FastMCP) — stdio (Claude Desktop/Cursor) +
-  Streamable HTTP. SAFE-by-construction (only a read tool → no risk gate). `ragwb serve
+  Streamable HTTP. SAFE-by-construction (only a read tool → no risk gate). `ragi serve
   <config> --transport stdio|http`. Returns deterministic markdown with `[Source:]` citations.
 - **Tool-schema generator** (`export/toolschema.py`, no deps): `search_tool_schema()` +
   `to_mcp` / `to_openai` / `to_anthropic` → wire the `search` tool into OpenAI function-calling
-  or Claude `tool_use` directly. `ragwb export-tool-schema --format ...`.
+  or Claude `tool_use` directly. `ragi export-tool-schema --format ...`.
 - **Framework adapters**: `adapters/langchain.py` (`LangChainRetrieverAdapter`,
   `[adapters-langchain]`, sync + async) + `adapters/llamaindex.py` (`[adapters-llamaindex]`,
   import-gated).
@@ -110,11 +117,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Notes
 - `mcp` SDK validated at 1.28.1; langchain-core 1.4.9 still uses the v0
   `_get_relevant_documents` contract (both sync + async paths implemented).
-- `ragwb serve` does not wire an embedder (v0.3) → semantic/hybrid configs degrade to keyword
+- `ragi serve` does not wire an embedder (v0.3) → semantic/hybrid configs degrade to keyword
   over MCP; lexical + rerank configs serve directly. HTTP transport is localhost/no-auth
   (production remote needs a Bearer reverse-proxy, documented).
 - llama-index is heavy and not installed in CI → the LlamaIndex adapter is import-gate-tested
-  only; validate with `pip install 'ragworkbench[adapters-llamaindex]'` when adopting.
+  only; validate with `pip install 'ragi[adapters-llamaindex]'` when adopting.
 
 ## [0.2.0] - 2026-07-26
 
@@ -167,7 +174,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   API key). Plus A/B stack comparison with paired bootstrap CI and a 9-dimension
   production-readiness rubric (CI-lower-bound gate).
 - Golden sets: MS MARCO (EN) corpus builder + bring-your-own JSON loader.
-- Workbench CLI: `ragwb ingest | eval | compare`.
+- Workbench CLI: `ragi ingest | eval | compare`.
 
 ### Notes
 - SemanticChunker deliberately **not** lifted (known-broken upstream); reimplement in v0.4.

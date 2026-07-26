@@ -5,16 +5,16 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import ragworkbench as rwb
-from ragworkbench.embeddings.mock import MockEmbeddingClient
+import ragi
+from ragi.embeddings.mock import MockEmbeddingClient
 
 
 async def test_build_pipeline_vectorstore_memory():
-    rwb.register_builtins()
+    ragi.register_builtins()
     d = Path(tempfile.mkdtemp())
     (d / "a.txt").write_text("the mitochondrion is the powerhouse of the cell")
     (d / "b.txt").write_text("photosynthesis converts sunlight into chemical energy")
-    retriever = rwb.build_pipeline(
+    retriever = ragi.build_pipeline(
         {
             "enabled": True,
             "chunker": "paragraph",

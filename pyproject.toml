@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-workbench"
+name = "ragi"
 version = "1.0.0"
-description = "Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
+description = "ragi — Retrieval that rises. Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
@@ -57,12 +57,12 @@ vectorstore-chroma = ["chromadb>=0.5"]
 vectorstore-pgvector = ["psycopg[binary]>=3.1"]
 
 [project.scripts]
-ragwb = "ragworkbench.workbench.cli:main"
+ragi = "ragi.workbench.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/hedypamungkas/rag-workbench"
-Documentation = "https://github.com/hedypamungkas/rag-workbench#readme"
-Issues = "https://github.com/hedypamungkas/rag-workbench/issues"
+Homepage = "https://github.com/hedypamungkas/ragi"
+Documentation = "https://github.com/hedypamungkas/ragi#readme"
+Issues = "https://github.com/hedypamungkas/ragi/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -80,7 +80,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "--cov=ragworkbench --cov-report=term-missing"
+addopts = "--cov=ragi --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["src"]
@@ -90,10 +90,10 @@ omit = [
   # Import-gated optional backends -- their deps (faiss/chroma/psycopg) are absent in CI,
   # so these files have no executable branches there. They're import-gated + documented;
   # the VectorStore Protocol + memory impl (fully tested) prove the contract.
-  "src/ragworkbench/vectorstore/faiss.py",
-  "src/ragworkbench/vectorstore/chroma.py",
-  "src/ragworkbench/vectorstore/pgvector.py",
-  "src/ragworkbench/adapters/llamaindex.py",
+  "src/ragi/vectorstore/faiss.py",
+  "src/ragi/vectorstore/chroma.py",
+  "src/ragi/vectorstore/pgvector.py",
+  "src/ragi/adapters/llamaindex.py",
 ]
 
 [tool.coverage.report]
@@ -116,7 +116,7 @@ exclude_lines = [
 python_version = "3.10"
 ignore_missing_imports = true  # optional deps (faiss/chroma/psycopg/boto3/mcp/langchain) absent
 no_strict_optional = true
-files = ["src/ragworkbench"]
+files = ["src/ragi"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "data", "scripts"]

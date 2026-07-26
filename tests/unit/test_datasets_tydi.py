@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from ragworkbench.eval.datasets import load_tydi_id, resolve_dataset
+from ragi.eval.datasets import load_tydi_id, resolve_dataset
 
 
 def test_load_tydi_id(tmp_path):

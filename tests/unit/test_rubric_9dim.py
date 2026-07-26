@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ragworkbench.eval.rubric import DEFAULT_RUBRIC, evaluate_rubric
-from ragworkbench.eval.types import MetricSummary
+from ragi.eval.rubric import DEFAULT_RUBRIC, evaluate_rubric
+from ragi.eval.types import MetricSummary
 
 
 def test_metric_dim_weights_sum_to_092():

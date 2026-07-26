@@ -7,7 +7,7 @@ retriever: vectorstore
 top_k: 10
 vectorstore:
   backend: pgvector
-  dsn: postgres://user:pass@localhost:5432/rwb
-  table: rwb_chunks
+  dsn: postgres://user:pass@localhost:5432/ragi
+  table: ragi_chunks
 documents:
   - path: data/ir_corpus

@@ -1,4 +1,4 @@
-"""End-to-end MCP stdio round-trip: a real ``mcp`` client -> ragworkbench ``search`` tool.
+"""End-to-end MCP stdio round-trip: a real ``mcp`` client -> ragi ``search`` tool.
 
 Spawns the server as a subprocess (BM25 over a temp corpus) and drives it with the official
 ``mcp`` client SDK: initialize -> tools/list -> tools/call. This is a genuine client->server
@@ -22,10 +22,10 @@ SRC = Path(__file__).resolve().parents[2] / "src"
 
 # Subprocess server: build a BM25 pipeline over argv[1] corpus dir, then serve stdio.
 _SERVER_SCRIPT = (
-    "import sys, ragworkbench as rwb; rwb.register_builtins(); "
-    "r = rwb.build_pipeline({'enabled':True,'chunker':'paragraph','retriever':'bm25',"
+    "import sys, ragi; ragi.register_builtins(); "
+    "r = ragi.build_pipeline({'enabled':True,'chunker':'paragraph','retriever':'bm25',"
     "'documents':[{'path':sys.argv[1]}]}); "
-    "from ragworkbench.export.mcp import RagWorkbenchMCPServer; "
+    "from ragi.export.mcp import RagWorkbenchMCPServer; "
     "RagWorkbenchMCPServer(r).run_stdio()"
 )
 

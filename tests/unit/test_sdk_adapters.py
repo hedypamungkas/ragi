@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from ragworkbench.adapters.anthropic import execute_anthropic_tool_call
-from ragworkbench.adapters.openai import execute_openai_tool_call
-from ragworkbench.retrieval.retriever import KeywordRetriever
-from ragworkbench.types import Chunk
+from ragi.adapters.anthropic import execute_anthropic_tool_call
+from ragi.adapters.openai import execute_openai_tool_call
+from ragi.retrieval.retriever import KeywordRetriever
+from ragi.types import Chunk
 
 CHUNKS = [Chunk("c1", "d1", "the mitochondrion is the powerhouse of the cell", metadata={"source": "bio"})]
 RETRIEVER = KeywordRetriever(chunks=CHUNKS)

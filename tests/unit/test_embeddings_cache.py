@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.embeddings.cache import _EMBEDDING_CACHE, clear_embedding_cache
-from ragworkbench.types import Chunk
+from ragi.embeddings.cache import _EMBEDDING_CACHE, clear_embedding_cache
+from ragi.types import Chunk
 
 
 async def _embed(text: str):

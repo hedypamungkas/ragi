@@ -13,7 +13,7 @@ Security tab) so the report stays private until a fix is coordinated.
 
 ## Scope
 
-This policy covers the `rag-workbench` PyPI package and its source on the `main` branch. The
+This policy covers the `ragi` PyPI package and its source on the `main` branch. The
 optional external backends (faiss/chroma/pgvector) and the MCP/SDK adapters are in scope as
 shipped code; third-party dependencies are not (report upstream).
 

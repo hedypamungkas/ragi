@@ -1,4 +1,8 @@
-# rag-workbench
+# ragi
+
+> ***Retrieval that rises.*** — named for the **sourdough starter** (*ragi*, Indonesian): a
+> living culture you **cultivate**, **measure before you bake**, and **share**. Tend your RAG the
+> same way — feed it data, measure it honestly, then ship the tuned stack to any agent.
 
 **Eval-first, agent-agnostic RAG toolkit.** Define a retrieval stack, measure it on a
 real IR golden set (offline, reproducible), iterate with statistical confidence, then
@@ -11,7 +15,7 @@ OpenAI / Claude SDK, v0, …).
 ## Why
 
 Every existing RAG library is **build-first, eval-as-afterthought** and locks you into
-its framework. rag-workbench closes the loop the other way: eval is the spine, the stack
+its framework. ragi closes the loop the other way: eval is the spine, the stack
 is portable, and a **lexical-only baseline runs the entire closed loop with zero API
 key** — measure your retrieval quality for free *before* paying for embeddings.
 
@@ -31,18 +35,18 @@ pip install -e ".[dev,parsers]"     # core + tests + text/html/pdf/docx parsers
 python scripts/build_ir_corpus.py
 
 # 2. measure a BM25 stack (retrieval-only eval, deterministic, zero cost)
-ragwb eval configs/bm25_baseline.yaml --dataset msmarco --n 120
+ragi eval configs/bm25_baseline.yaml --dataset msmarco --n 120
 
 # 3. A/B compare two stacks with a paired bootstrap CI on the difference
-ragwb compare configs/bm25.yaml configs/bm25_stopwords.yaml --metric recall@10
+ragi compare configs/bm25.yaml configs/bm25_stopwords.yaml --metric recall@10
 ```
 
 As a library:
 
 ```python
-import ragworkbench as rwb
-rwb.register_builtins()
-retriever = rwb.build_pipeline({
+import ragi
+ragi.register_builtins()
+retriever = ragi.build_pipeline({
     "enabled": True,
     "chunker": "paragraph",
     "retriever": "bm25",
@@ -73,7 +77,7 @@ A tuned stack becomes a portable retrieval contract three ways:
 
 ```bash
 pip install -e ".[mcp]"
-ragwb serve configs/bm25_baseline.yaml --transport stdio
+ragi serve configs/bm25_baseline.yaml --transport stdio
 ```
 
 Claude Desktop `claude_desktop_config.json`:
@@ -81,8 +85,8 @@ Claude Desktop `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "rag-workbench": {
-      "command": "ragwb",
+    "ragi": {
+      "command": "ragi",
       "args": ["serve", "/abs/path/to/configs/bm25_baseline.yaml", "--transport", "stdio"]
     }
   }
@@ -92,15 +96,15 @@ Claude Desktop `claude_desktop_config.json`:
 **2. Tool-schema** (OpenAI function-calling / Claude `tool_use`):
 
 ```bash
-ragwb export-tool-schema --format openai      # or: mcp | anthropic | base
+ragi export-tool-schema --format openai      # or: mcp | anthropic | base
 ```
 
 **3. Framework adapters** (LangChain / LlamaIndex):
 
 ```python
 # pip install -e ".[adapters-langchain]"
-from ragworkbench.adapters.langchain import LangChainRetrieverAdapter
-lc = LangChainRetrieverAdapter(rwb_retriever=retriever, top_k=5)
+from ragi.adapters.langchain import LangChainRetrieverAdapter
+lc = LangChainRetrieverAdapter(ragi_retriever=retriever, top_k=5)
 docs = lc.invoke("your query")   # -> list[langchain_core.documents.Document]
 ```
 
@@ -111,7 +115,7 @@ hallucinated), correct, and does it abstain on out-of-scope queries?
 
 ```bash
 # needs OPENAI_API_KEY (Mode B generates + judges answers via a chat model)
-OPENAI_API_KEY=... ragwb eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120
+OPENAI_API_KEY=... ragi eval configs/bm25_rerank.yaml --dataset msmarco --mode end_to_end -n 120
 ```
 
 Faithfulness uses **NLI claim-decomposition** (decompose the answer into atomic claims, NLI-check
@@ -129,7 +133,7 @@ SEA-aware differentiator.
 in-memory-cosine path for smaller ones):
 
 ```python
-rwb.build_pipeline({
+ragi.build_pipeline({
     "retriever": "vectorstore",
     "vectorstore": {"backend": "faiss"},   # or chroma / pgvector / memory
     "documents": [{"path": "data/corpus"}],

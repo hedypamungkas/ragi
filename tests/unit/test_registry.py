@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-import ragworkbench as rwb
-from ragworkbench.registry import ComponentRegistry, _extract_parameters
+import ragi
+from ragi.registry import ComponentRegistry, _extract_parameters
 
 
 class TestComponentRegistry:
@@ -40,12 +40,12 @@ class TestComponentRegistry:
             reg.register("c", C, config_aliases={"yaml_key": "nonexistent_param"})
 
     def test_builtins_registered(self):
-        rwb.register_builtins()
-        assert "bm25" in rwb.retriever_registry.list_available()
-        assert "keyword" in rwb.retriever_registry.list_available()
-        assert "paragraph" in rwb.chunker_registry.list_available()
-        assert "text" in rwb.parser_registry.list_available()
+        ragi.register_builtins()
+        assert "bm25" in ragi.retriever_registry.list_available()
+        assert "keyword" in ragi.retriever_registry.list_available()
+        assert "paragraph" in ragi.chunker_registry.list_available()
+        assert "text" in ragi.parser_registry.list_available()
 
     def test_load_custom_modules_missing_is_soft(self):
         # A nonexistent module logs a warning, does not raise.
-        rwb.load_custom_components(["this.module.does.not.exist"])
+        ragi.load_custom_components(["this.module.does.not.exist"])

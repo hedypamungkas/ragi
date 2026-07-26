@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ragworkbench.ingest.chunker import FixedSizeChunker, ParagraphChunker, SentenceChunker
-from ragworkbench.types import Document
+from ragi.ingest.chunker import FixedSizeChunker, ParagraphChunker, SentenceChunker
+from ragi.types import Document
 
 
 def _doc(text: str) -> Document:

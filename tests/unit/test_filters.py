@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ragworkbench.ingest.filters import matches_filter
+from ragi.ingest.filters import matches_filter
 
 
 class TestMatchesFilter:

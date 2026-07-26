@@ -6,10 +6,10 @@ import asyncio
 
 import pytest
 
-from ragworkbench.errors import LLMInvalidRequestError
-from ragworkbench.retrieval.rerank import CrossEncoderReranker, MockReranker, build_rerank_client
-from ragworkbench.retrieval.retriever import KeywordRetriever
-from ragworkbench.types import Chunk
+from ragi.errors import LLMInvalidRequestError
+from ragi.retrieval.rerank import CrossEncoderReranker, MockReranker, build_rerank_client
+from ragi.retrieval.retriever import KeywordRetriever
+from ragi.types import Chunk
 
 CHUNKS = [
     Chunk("c1", "d1", "cats are great pets"),

@@ -6,7 +6,7 @@ Writes (idempotent; HF-cached after first run):
   research-use, so passage TEXT stays out of the repo).
 - ``evals/fixtures/ir_qrels.json`` -- committed, license-light: only query + answer + gold
   passage id + a short distinctive snippet (no passage body). Consumed by
-  ``ragworkbench.eval.datasets.load_msmarco``.
+  ``ragi.eval.datasets.load_msmarco``.
 
     pip install -e ".[eval]"   # needs `datasets`
     python scripts/build_ir_corpus.py --n 120

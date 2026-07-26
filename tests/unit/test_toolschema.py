@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ragworkbench.export.toolschema import (
+from ragi.export.toolschema import (
     search_tool_schema,
     to_anthropic,
     to_mcp,

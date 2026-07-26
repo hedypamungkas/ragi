@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.embeddings.cache import clear_embedding_cache
-from ragworkbench.embeddings.mock import MockEmbeddingClient
-from ragworkbench.retrieval.retriever import HybridRetriever, SemanticRetriever
-from ragworkbench.types import Chunk
+from ragi.embeddings.cache import clear_embedding_cache
+from ragi.embeddings.mock import MockEmbeddingClient
+from ragi.retrieval.retriever import HybridRetriever, SemanticRetriever
+from ragi.types import Chunk
 
 CHUNKS = [
     Chunk("c1", "d1", "the mitochondrion is the powerhouse of the cell"),

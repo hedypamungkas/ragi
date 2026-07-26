@@ -6,7 +6,7 @@ retriever: vectorstore
 top_k: 10
 vectorstore:
   backend: chroma
-  collection: rwb
+  collection: ragi
   path: data/chroma  # persistent dir (or an http(s) URL for a Chroma server)
 documents:
   - path: data/ir_corpus

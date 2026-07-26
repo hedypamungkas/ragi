@@ -7,9 +7,9 @@ import pytest
 pytest.importorskip("langchain_core")
 from langchain_core.documents import Document  # noqa: E402
 
-from ragworkbench.adapters.langchain import LangChainRetrieverAdapter  # noqa: E402
-from ragworkbench.retrieval.retriever import KeywordRetriever  # noqa: E402
-from ragworkbench.types import Chunk  # noqa: E402
+from ragi.adapters.langchain import LangChainRetrieverAdapter  # noqa: E402
+from ragi.retrieval.retriever import KeywordRetriever  # noqa: E402
+from ragi.types import Chunk  # noqa: E402
 
 CHUNKS = [
     Chunk("c1", "d1", "the mitochondrion is the powerhouse of the cell"),
@@ -18,7 +18,7 @@ CHUNKS = [
 
 
 def test_langchain_adapter_invoke_returns_documents():
-    adapter = LangChainRetrieverAdapter(rwb_retriever=KeywordRetriever(chunks=CHUNKS), top_k=2)
+    adapter = LangChainRetrieverAdapter(ragi_retriever=KeywordRetriever(chunks=CHUNKS), top_k=2)
     docs = adapter.invoke("photosynthesis sunlight energy")
     assert docs, "expected at least one Document"
     assert isinstance(docs[0], Document)
@@ -29,6 +29,6 @@ def test_langchain_adapter_invoke_returns_documents():
 
 @pytest.mark.asyncio
 async def test_langchain_adapter_ainvoke():
-    adapter = LangChainRetrieverAdapter(rwb_retriever=KeywordRetriever(chunks=CHUNKS), top_k=2)
+    adapter = LangChainRetrieverAdapter(ragi_retriever=KeywordRetriever(chunks=CHUNKS), top_k=2)
     docs = await adapter.ainvoke("photosynthesis sunlight energy")
     assert docs and docs[0].metadata["doc_id"] == "d2"

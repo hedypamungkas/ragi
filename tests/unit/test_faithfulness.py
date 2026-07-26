@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 
-from ragworkbench.eval.faithfulness import FaithfulnessScorer, normalize_verdict
-from ragworkbench.eval.mock_chat import MockChatClient
-from ragworkbench.eval.types import EvalCase
+from ragi.eval.faithfulness import FaithfulnessScorer, normalize_verdict
+from ragi.eval.mock_chat import MockChatClient
+from ragi.eval.types import EvalCase
 
 _CTX = {"rag_results": [{"content": "photosynthesis converts sunlight into chemical energy"}]}
 

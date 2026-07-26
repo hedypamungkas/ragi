@@ -12,7 +12,7 @@ import sys
 
 import pytest
 
-from ragworkbench.errors import LLMInvalidRequestError
+from ragi.errors import LLMInvalidRequestError
 
 
 def test_llamaindex_adapter_import_gated():
@@ -23,6 +23,6 @@ def test_llamaindex_adapter_import_gated():
     except ImportError:
         pass  # expected in the bare test env
 
-    sys.modules.pop("ragworkbench.adapters.llamaindex", None)
+    sys.modules.pop("ragi.adapters.llamaindex", None)
     with pytest.raises(LLMInvalidRequestError, match="adapters-llamaindex"):
-        importlib.import_module("ragworkbench.adapters.llamaindex")
+        importlib.import_module("ragi.adapters.llamaindex")

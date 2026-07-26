@@ -7,11 +7,11 @@ metric values.
 
 from __future__ import annotations
 
-from ragworkbench.eval.compare import compare
-from ragworkbench.eval.datasets import synthetic_chunks, synthetic_fixture
-from ragworkbench.eval.rubric import evaluate_rubric
-from ragworkbench.eval.runner import StandaloneEvalRunner
-from ragworkbench.retrieval.retriever import BM25Retriever, KeywordRetriever
+from ragi.eval.compare import compare
+from ragi.eval.datasets import synthetic_chunks, synthetic_fixture
+from ragi.eval.rubric import evaluate_rubric
+from ragi.eval.runner import StandaloneEvalRunner
+from ragi.retrieval.retriever import BM25Retriever, KeywordRetriever
 
 
 async def test_runner_synthetic_closed_loop():
@@ -48,7 +48,7 @@ async def test_rubric_fails_on_small_n_honest_ci():
 
 def test_rubric_passes_when_ci_lower_bound_meets_threshold():
     # Fabricate a strong aggregate and a large n -> PASS.
-    from ragworkbench.eval.types import MetricSummary
+    from ragi.eval.types import MetricSummary
 
     agg = {
         "retrieval_recall": MetricSummary(0.95, 0.90, 0.99, 120),

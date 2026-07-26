@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import tempfile
 
-import ragworkbench as rwb
+import ragi
 
 
 def _corpus() -> str:
@@ -16,16 +16,16 @@ def _corpus() -> str:
 
 
 def test_base_retriever_when_no_wrappers():
-    rwb.register_builtins()
-    r = rwb.build_pipeline(
+    ragi.register_builtins()
+    r = ragi.build_pipeline(
         {"enabled": True, "chunker": "paragraph", "retriever": "bm25", "documents": [{"path": _corpus()}]}
     )
     assert type(r).__name__ == "BM25Retriever"
 
 
 def test_rerank_wraps_base():
-    rwb.register_builtins()
-    r = rwb.build_pipeline(
+    ragi.register_builtins()
+    r = ragi.build_pipeline(
         {
             "enabled": True,
             "chunker": "paragraph",
@@ -40,8 +40,8 @@ def test_rerank_wraps_base():
 def test_rewrite_then_rerank_nested_correctly():
     # rewrite wrapper sits OUTSIDE rerank: query is rewritten, then the rerank-wrapped
     # retriever over-fetches + rescores. Outer type = CrossEncoderReranker, inner = RewritingRetriever.
-    rwb.register_builtins()
-    r = rwb.build_pipeline(
+    ragi.register_builtins()
+    r = ragi.build_pipeline(
         {
             "enabled": True,
             "chunker": "paragraph",
@@ -57,8 +57,8 @@ def test_rewrite_then_rerank_nested_correctly():
 
 def test_rerank_api_key_env_fallback(monkeypatch):
     monkeypatch.setenv("JINA_API_KEY", "envkey")
-    rwb.register_builtins()
-    r = rwb.build_pipeline(
+    ragi.register_builtins()
+    r = ragi.build_pipeline(
         {
             "enabled": True,
             "chunker": "paragraph",

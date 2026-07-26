@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from ragworkbench._internal.http import BearerAuth, _raise_for_status
-from ragworkbench.errors import (
+from ragi._internal.http import BearerAuth, _raise_for_status
+from ragi.errors import (
     LLMAuthenticationError,
     LLMInvalidRequestError,
     LLMRateLimitError,
