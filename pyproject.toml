@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 authors = [{name = "Hedy Pamungkas", email = "hedypamungkas@gmail.com"}]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
@@ -62,7 +62,9 @@ ragi = "ragi.workbench.cli:main"
 [project.urls]
 Homepage = "https://github.com/hedypamungkas/ragi"
 Documentation = "https://github.com/hedypamungkas/ragi#readme"
+Repository = "https://github.com/hedypamungkas/ragi"
 Issues = "https://github.com/hedypamungkas/ragi/issues"
+Changelog = "https://github.com/hedypamungkas/ragi/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
