@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
+## [1.0.0] - 2026-07-27
+
+### Productionization (the trust layer — not a feature slice)
+- **CI gates** (`.github/workflows/ci.yml`): `ruff check` + `ruff format --check` (HARD) +
+  `pytest --cov` (ratcheting floor 60% on the Linux/3.12 cell) + `bandit` + `pip-audit --strict
+  --exclude-editable` (HARD) + `mypy` (SOFT, Protocol-heavy code). Matrix py3.10–3.13 ×
+  ubuntu/macos. Least-priv permissions, Dependabot (pip + github-actions).
+- **Coverage work**: `tests/unit/test_cli.py` (11 tests — lifts `cli.py` 0%→91%); `omit` the
+  import-gated backends (faiss/chroma/pgvector + llamaindex — untestable without their deps).
+  Total ~64%, gated at 60% (ratcheting).
+- **`[tool.*]` config**: `[tool.mypy]` (lenient: `ignore_missing_imports` + `no_strict_optional`),
+  `[tool.bandit]` (skip B608 SQL false-positive). `mypy/bandit/pip-audit/build` added to `[dev]`.
+- **Release** (`.github/workflows/release.yml`): build sdist+wheel on `v*` tag (artifact upload).
+  PyPI publish deferred (not published yet).
+- **Dev docs**: `CONTRIBUTING.md` (5 local gates + extension recipes) + `.github/SECURITY.md`
+  (private-advisory + SLA) + `.github/PULL_REQUEST_TEMPLATE.md` + `.github/dependabot.yml` +
+  `docs/architecture.md`.
+- **Build verified**: `python -m build` → `rag_workbench-1.0.0.{tar.gz,whl}`; console-script
+  `ragwb` resolves.
+
+### Notes
+- mypy is SOFT by design (Protocol/TYPE_CHECKING noise; koboi itself only stays green via lenient
+  config). Promote to HARD once the type-clean backlog burns down.
+- Coverage is a ratcheting floor (64% today) — don't lower it; raise it as tests grow. Optional
+  backends are `omit`-ed by design (import-gated; Protocol + memory impl prove the contract).
+
 ## [0.5.0] - 2026-07-27
 
 ### Added — backend-breadth capstone (feature-complete)

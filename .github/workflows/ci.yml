@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check src/ tests/ scripts/
+      - run: ruff format --check src/ tests/ scripts/
+      # mypy is SOFT (continue-on-error): Protocol-heavy + TYPE_CHECKING code with a lenient
+      # config. Promote to HARD once the type-clean backlog burns down (see CONTRIBUTING.md).
+      - run: mypy src/ragworkbench
+        continue-on-error: true
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e ".[dev]"
+      - name: pytest (coverage gate on the Linux/3.12 cell only)
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ] && [ "${{ matrix.python-version }}" = "3.12" ]; then
+            pytest --cov=ragworkbench --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+          else
+            pytest
+          fi
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false # external outage must not turn the quality gate red
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev]"
+      - run: bandit -r src/ -c pyproject.toml
+      # pip-audit against the frozen non-editable deps (--strict treats an editable-installed
+      # pkg as a collection failure right after a version bump -- a solved gotcha, copy verbatim).
+      - run: pip-audit --strict -r <(pip freeze --exclude-editable)
+        shell: bash

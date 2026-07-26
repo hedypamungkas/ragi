@@ -53,7 +53,9 @@ results = await retriever.retrieve("what is photosynthesis?", top_k=5)
 
 ## Status
 
-Alpha (v0.5). Phased roadmap — each slice ships a working closed loop + measured baseline:
+**v1.0 — productionized (CI-gated).** The feature arc (v0.1–v0.5) is complete; v1.0 adds the
+trust layer. See [CONTRIBUTING.md](CONTRIBUTING.md) (local gates) +
+[docs/architecture.md](docs/architecture.md) (design). Phased roadmap:
 
 | Slice | Ships |
 |---|---|
