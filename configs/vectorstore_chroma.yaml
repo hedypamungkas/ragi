@@ -1,0 +1,12 @@
+# VectorStore-backed retrieval with Chroma (persistent client).
+# Needs `pip install -e ".[vectorstore-chroma]"` + an EmbeddingClient (programmatic).
+enabled: true
+chunker: paragraph
+retriever: vectorstore
+top_k: 10
+vectorstore:
+  backend: chroma
+  collection: rwb
+  path: data/chroma  # persistent dir (or an http(s) URL for a Chroma server)
+documents:
+  - path: data/ir_corpus

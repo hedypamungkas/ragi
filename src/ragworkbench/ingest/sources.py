@@ -1,7 +1,8 @@
-"""ragworkbench/ingest/sources -- remote document fetching (HTTP) + on-disk cache.
+"""ragworkbench/ingest/sources -- remote document fetching (HTTP / S3 / Firecrawl) + cache.
 
-Lifted from ``koboi/rag/sources.py`` and decoupled: zero ``koboi.*`` imports. Only the
-HTTP source is shipped in v0.1 (S3/R2 and Firecrawl arrive in v0.2).
+Lifted from ``koboi/rag/sources.py`` and decoupled: zero ``koboi.*`` imports. Ships the
+HTTP source (httpx, hard dep), the S3/R2 source (boto3, optional ``[rag-cloud]`` extra),
+and the Firecrawl site-crawl source (httpx -- no extra).
 
 The SSRF guard and retry constants are inlined from ``koboi.tools.builtin.web`` (the
 upstream source imports them across that boundary). Inlining keeps the lib decoupled
@@ -23,11 +24,14 @@ import ipaddress
 import logging
 import os
 import socket
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx  # hard dependency (pyproject)
+
+from ragworkbench.errors import LLMInvalidRequestError
 
 _logger = logging.getLogger(__name__)
 
@@ -231,6 +235,207 @@ def fetch_http_entry(
         except OSError as exc:
             _logger.warning("DocumentCache write failed for %s: %s", url, exc)
     yield name, data
+
+
+# ---------------------------------------------------------------------------
+# S3 / R2 fetch (boto3, optional [rag-cloud] extra)
+# ---------------------------------------------------------------------------
+
+
+def fetch_s3_entry(
+    entry: dict,
+    doc_cache: DocumentCache | None,
+    *,
+    max_bytes: int | None = None,
+) -> Iterator[tuple[str, bytes]]:
+    """Yield ``(name, bytes)`` for objects under an S3/R2 prefix, with per-object cache.
+
+    Cloudflare R2 is S3-compatible (use ``endpoint_url``). Requires ``boto3`` (the
+    ``[rag-cloud]`` extra); raises ``LLMInvalidRequestError`` at call time when the
+    optional dependency is missing. Three-layer size cap: ``Size`` metadata pre-check
+    -> bounded ``body.read(max_bytes+1)`` -> post-read re-check. Per-object try/except
+    so one bad object doesn't abort the rest.
+    """
+    try:
+        import boto3  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise LLMInvalidRequestError("(rag-cloud) boto3 required: pip install 'ragworkbench[rag-cloud]'") from exc
+    if max_bytes is None:
+        max_bytes = _DEFAULT_MAX_DOC_BYTES
+    bucket = entry.get("bucket")
+    prefix = entry.get("key", "")
+    if not bucket:
+        _logger.warning("s3 document source missing 'bucket'; skipping")
+        return
+    endpoint = entry.get("endpoint_url") or ""
+    region = entry.get("region", "auto")
+    try:
+        client = boto3.client(
+            "s3",
+            endpoint_url=endpoint or None,
+            region_name=region,
+            aws_access_key_id=entry.get("access_key_id"),
+            aws_secret_access_key=entry.get("secret_access_key"),
+        )
+        paginator = client.get_paginator("list_objects_v2")
+        found = False
+        skipped = 0
+        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+            for obj in page.get("Contents", []):
+                okey = obj["Key"]
+                if okey.endswith("/"):  # folder marker
+                    continue
+                found = True
+                name = okey.rsplit("/", 1)[-1] or okey
+                # Include endpoint_url + region in the key so two backends with the
+                # same bucket+key don't collide in a shared cache dir.
+                ckey = source_key(
+                    {"source": "s3", "bucket": bucket, "key": okey, "endpoint_url": endpoint, "region": region}
+                )
+                cached = doc_cache.get(ckey) if doc_cache else None
+                if cached is not None:
+                    yield cached
+                    continue
+                # Size pre-check -- skip the download entirely when the object
+                # metadata already declares an oversized payload (no get_object call).
+                obj_size = obj.get("Size")
+                if obj_size is not None and obj_size > max_bytes:
+                    _logger.warning(
+                        "s3: skipping object %r (bucket=%s): Size %s exceeds %s byte limit",
+                        okey,
+                        bucket,
+                        obj_size,
+                        max_bytes,
+                    )
+                    skipped += 1
+                    continue
+                # Per-object try so one bad object doesn't kill the rest.
+                try:
+                    body = client.get_object(Bucket=bucket, Key=okey)["Body"]
+                    data = body.read(max_bytes + 1)  # bounded read
+                except Exception as exc:  # noqa: BLE001
+                    _logger.warning("s3: skipping object %r (bucket=%s): %s", okey, bucket, exc)
+                    skipped += 1
+                    continue
+                # Reject when the bounded read still crossed the cap (the body is
+                # larger than max_bytes even without / despite the Size metadata).
+                if len(data) > max_bytes:
+                    _logger.warning(
+                        "s3: skipping object %r (bucket=%s): exceeds %s byte limit", okey, bucket, max_bytes
+                    )
+                    skipped += 1
+                    continue
+                if doc_cache:
+                    try:  # only cache AFTER the size check passed
+                        doc_cache.put(ckey, name, data)
+                    except OSError as exc:
+                        _logger.warning("DocumentCache write failed for s3://%s/%s: %s", bucket, okey, exc)
+                yield name, data
+        if not found:
+            _logger.warning("s3 bucket=%s prefix=%r returned no objects", bucket, prefix)
+        if skipped:
+            _logger.warning("s3: %d object(s) skipped due to errors (bucket=%s)", skipped, bucket)
+    except Exception as exc:  # credentials / endpoint / network -> skip, keep building  # noqa: BLE001
+        _logger.warning("s3 fetch failed (bucket=%s): %s", bucket, exc)
+
+
+# ---------------------------------------------------------------------------
+# Firecrawl site-crawl fetch (httpx, no extra)
+# ---------------------------------------------------------------------------
+
+
+def _firecrawl_crawl(base_url: str, api_key: str, limit: int, endpoint: str | None) -> list[dict]:
+    """Run a Firecrawl site crawl (``POST /v1/crawl`` -> poll ``GET /v1/crawl/{id}``).
+
+    Returns the list of page dicts (each carries ``markdown``/``html`` +
+    ``metadata.sourceURL``). Raises on transport/HTTP failure or poll timeout. Returns
+    the ``data`` list directly when Firecrawl answers synchronously.
+    """
+    base = (endpoint or "https://api.firecrawl.dev").rstrip("/")
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {"url": base_url, "limit": limit, "scrapeOptions": {"formats": ["markdown"]}}
+    with httpx.Client(timeout=60) as client:
+        resp = client.post(f"{base}/v1/crawl", json=payload, headers=headers)
+        resp.raise_for_status()
+        job = resp.json()
+        # Sync response already carrying data, or an async job id to poll.
+        if isinstance(job.get("data"), list):
+            return job["data"]
+        job_id = job.get("id")
+        if not job_id:
+            raise RuntimeError("firecrawl crawl returned no job id and no data")
+        for _ in range(120):  # up to ~4 minutes
+            r = client.get(f"{base}/v1/crawl/{job_id}", headers=headers)
+            r.raise_for_status()
+            status = r.json()
+            if status.get("status") == "completed":
+                return status.get("data") or []
+            if status.get("status") == "failed":
+                raise RuntimeError(f"firecrawl crawl job failed: {status.get('error', '')}")
+            time.sleep(2)
+        raise RuntimeError("firecrawl crawl job timed out")
+
+
+def fetch_firecrawl_entry(entry: dict, doc_cache: DocumentCache | None) -> Iterator[tuple[str, bytes]]:
+    """Yield ``(name, bytes)`` for pages of a Firecrawl site crawl, with per-page cache.
+
+    Mirrors ``fetch_http_entry`` / ``fetch_s3_entry``: one bad page skips (does not abort
+    the crawl); ``DocumentCache`` keys by ``source_key({"source":"firecrawl","url":page_url})``
+    so remote crawls aren't re-run on every per-run rebuild.
+
+    ``entry`` keys: ``url`` (seed), ``api_key`` (or ``$FIRECRAWL_API_KEY``), ``limit`` (max
+    pages, default 50), ``endpoint_url`` (self-host override). Uses ``httpx`` (already a
+    hard dependency -- no extra required).
+    """
+    url = entry.get("url", "")
+    if not url:
+        return
+    api_key = entry.get("api_key") or os.getenv("FIRECRAWL_API_KEY", "")
+    if not api_key:
+        _logger.warning("firecrawl source %s missing api_key; skipping", url)
+        return
+    # Defense in depth: validate the seed URL client-side before handing it to the SaaS.
+    # ValueError = private range; OSError = DNS failure (gaierror). Either -> skip the entry.
+    try:
+        _check_url_ssrf(url)
+    except (ValueError, OSError) as exc:
+        _logger.warning("firecrawl source %s rejected by SSRF guard: %s", url, exc)
+        return
+
+    limit = int(entry.get("limit", 50))
+    try:
+        pages = _firecrawl_crawl(url, api_key, limit, entry.get("endpoint_url"))
+    except Exception as exc:  # noqa: BLE001 - network / API / poll -> skip, keep building
+        _logger.warning("firecrawl crawl failed for %s: %s", url, exc)
+        return
+
+    found = False
+    for page in pages:
+        if not isinstance(page, dict):
+            continue
+        meta = page.get("metadata") or {}
+        page_url = (meta.get("sourceURL") if isinstance(meta, dict) else "") or url
+        name = name_from_url(page_url) or "page"
+        ckey = source_key({"source": "firecrawl", "url": page_url})
+        if doc_cache:
+            cached = doc_cache.get(ckey)
+            if cached is not None:
+                found = True
+                yield cached
+                continue
+        content = page.get("markdown", "") or page.get("html", "")
+        if not content:
+            continue
+        found = True
+        data = content.encode("utf-8")
+        if doc_cache:
+            try:
+                doc_cache.put(ckey, name, data)
+            except OSError as exc:
+                _logger.warning("DocumentCache write failed for firecrawl %s: %s", page_url, exc)
+        yield name, data
+    if not found:
+        _logger.warning("firecrawl crawl of %s returned no usable pages", url)
 
 
 # ---------------------------------------------------------------------------

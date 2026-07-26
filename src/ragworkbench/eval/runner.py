@@ -212,10 +212,7 @@ class EndToEndEvalRunner:
             results = await retriever.retrieve(qrel.query, top_k=self.k)
             retrieved_contents = [r.chunk.content for r in results]
             doc_ids = [r.chunk.doc_id for r in results]
-            ctx_dicts = [
-                {"content": c, "doc_id": d}
-                for c, d in zip(retrieved_contents, doc_ids, strict=True)
-            ]
+            ctx_dicts = [{"content": c, "doc_id": d} for c, d in zip(retrieved_contents, doc_ids, strict=True)]
             context_str = _format_context(results)
             scores: list[EvalScore] = []
 

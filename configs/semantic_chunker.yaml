@@ -1,0 +1,13 @@
+# Embedding-aware semantic chunking (greedy merge of adjacent sentences by cosine similarity).
+# Needs an EmbeddingClient (programmatic; the chunker embeds via embed_batch).
+enabled: true
+chunker: semantic
+retriever: bm25
+top_k: 10
+k1: 1.5
+b: 0.75
+# semantic chunker params (read by the chunker when an embedder is threaded into build_pipeline)
+semantic_threshold: 0.76
+max_chunk_size: 800
+documents:
+  - path: data/ir_corpus

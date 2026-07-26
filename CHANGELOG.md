@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
+## [0.5.0] - 2026-07-27
+
+### Added — backend-breadth capstone (feature-complete)
+- **VectorStore backends** (`vectorstore/`): `InMemoryVectorStore` (always, pure stdlib) +
+  `FaissVectorStore` (`[vector-faiss]`) + `ChromaVectorStore` (`[vectorstore-chroma]`) +
+  `PgvectorStore` (`[vectorstore-pgvector]`) — the scale path for >100k-chunk corpora. `build_store(config, embedder)`
+  factory. Each external backend is import-gated (clear error without its extra).
+- **`VectorStoreRetriever`** (`retrieval/vectorstore_retriever.py`) — lazily indexes chunks into a
+  store on first `retrieve`; additive (SemanticRetriever untouched). `build_pipeline` gains a
+  `retriever: vectorstore` branch.
+- **`SemanticChunker`** (`ingest/chunker.py`) — async-aware embedding chunking (greedy sentence merge
+  by cosine > threshold); sync `chunk()` + `chunk_async()`. NOT the broken upstream one.
+- **s3 + firecrawl sources** (`ingest/sources.py`) — `fetch_s3_entry` (`[rag-cloud]`/boto3, R2 via
+  endpoint_url, 3-layer size cap) + `fetch_firecrawl_entry` (httpx, SSRF-guarded seed). Lifted from
+  koboi. `_load_documents` dispatches `source: s3|firecrawl`.
+- **OpenAI/Claude SDK adapters** (`adapters/openai.py` + `anthropic.py` + `_dispatch.py`) —
+  `execute_*_tool_call(retriever, tool_call)` dispatch for non-MCP SDK agents (consume the existing
+  `toolschema`; pure stdlib, no SDK dep).
+- +15 tests (108 total, ruff clean): vectorstore memory/retriever/pipeline, faiss/chroma/pgvector
+  import-gates, semantic chunker (mock embedder), s3 gate, SDK adapters (OpenAI JSON args +
+  Anthropic input dict).
+
+### Notes
+- **Feature-complete** — all 5 roadmap slices shipped (v0.1 lexical+eval → v0.2 semantic/rerank →
+  v0.3 MCP/adapters → v0.4 Mode B faithfulness → v0.5 backends/chunker/sources/SDK). Next: v1.0 polish/release.
+- In-session only memory + SemanticChunker + SDK adapters are live-tested; faiss/chroma/pgvector/s3
+  are import-gated + documented (real-run commands). The Protocol + memory impl prove the contract.
+
 ## [0.4.0] - 2026-07-26
 
 ### Added — production-readiness depth (Mode B + full 9-dim rubric + TyDi-id)

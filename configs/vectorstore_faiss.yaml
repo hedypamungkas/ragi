@@ -1,0 +1,12 @@
+# VectorStore-backed retrieval with faiss (ANN scale path, >100k chunks).
+# Needs `pip install -e ".[vector-faiss]"` + an EmbeddingClient (programmatic; the CLI does
+# not wire an embedder in v0.5). Use as a library:
+#   rwb.build_pipeline(config, embedder=OpenAIEmbeddingClient(api_key=...))
+enabled: true
+chunker: paragraph
+retriever: vectorstore
+top_k: 10
+vectorstore:
+  backend: faiss
+documents:
+  - path: data/ir_corpus

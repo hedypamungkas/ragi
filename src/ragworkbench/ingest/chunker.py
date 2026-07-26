@@ -2,22 +2,28 @@
 
 Lifted from ``koboi/rag/chunker.py`` and decoupled: zero ``koboi.*`` imports. The
 ``BaseChunker`` ABC + ``FixedSizeChunker`` / ``SentenceChunker`` / ``ParagraphChunker``
-built-ins are registered at module import via ``@register_chunker`` (so importing this
-module is sufficient to populate ``chunker_registry`` -- ``ragworkbench.register_builtins``
-just imports it).
+/ ``SemanticChunker`` built-ins are registered at module import via ``@register_chunker``
+(so importing this module is sufficient to populate ``chunker_registry`` --
+``ragworkbench.register_builtins`` just imports it).
 
-Dropped vs koboi: ``SemanticChunker`` is intentionally omitted. Upstream it always
-falls back to ``SentenceChunker`` because the sync chunker has no access to the async
-embedding endpoint (``_get_embeddings_sync`` returns ``None`` unconditionally). A real
-embedding-aware semantic chunker will land in v0.4 once the async embedder seam is in
-place -- shipping a known-broken one would just silently masquerade as sentence mode.
+The ``SemanticChunker`` is async-aware: it embeds each sentence via
+``EmbeddingClient.embed_batch`` (the only chunker here that needs an embedder) and
+greedily merges adjacent sentences by cosine similarity. Its sync ``chunk()`` runs the
+async path via ``asyncio.run`` and refuses to nest inside a running event loop (call
+``chunk_async`` directly instead) -- fixing the upstream koboi bug where the sync
+chunker had no access to the async embedding endpoint and silently fell back to
+sentence mode.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import math
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Coroutine
+from typing import Any
 
 from ragworkbench.registry import chunker_registry, register_chunker
 from ragworkbench.types import Chunk, Document
@@ -186,6 +192,112 @@ class ParagraphChunker(BaseChunker):
                     index += 1
 
         return chunks
+
+
+def _cosine(a: list[float], b: list[float]) -> float:
+    """Pure-stdlib cosine similarity (0.0 for zero-norm or orthogonal vectors)."""
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(y * y for y in b))
+    if na < 1e-10 or nb < 1e-10:
+        return 0.0
+    return dot / (na * nb)
+
+
+def _run_sync(coro: Coroutine[Any, Any, list[Chunk]]) -> list[Chunk]:
+    """Run a coroutine from sync code; refuse to nest inside a running event loop."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    # Inside a running loop -- close the un-awaited coroutine to avoid a RuntimeWarning.
+    coro.close()
+    raise RuntimeError("SemanticChunker.chunk() cannot embed from a running event loop; use chunk_async()")
+
+
+@register_chunker(
+    "semantic",
+    description="Embedding-aware semantic chunking (greedy sentence merge by cosine)",
+)
+class SemanticChunker(BaseChunker):
+    """Embedding-aware semantic chunking.
+
+    Splits into sentences (same regex as :class:`SentenceChunker`), embeds each via
+    ``embedder.embed_batch``, then greedily merges adjacent sentences while cosine
+    similarity stays above ``threshold`` and the buffer stays under ``max_chunk_size``.
+    A merged group whose own length exceeds the cap is hard-split via
+    :class:`FixedSizeChunker` (mirrors :class:`ParagraphChunker`). If the embedder
+    returns ``None`` for every sentence (fail-soft unavailability), the chunker
+    degrades to :class:`SentenceChunker` so semantic mode never silently drops content.
+    """
+
+    def __init__(self, embedder, threshold: float = 0.76, max_chunk_size: int = 800):
+        self.embedder = embedder
+        self.threshold = threshold
+        self.max_chunk_size = max_chunk_size
+        self._sentence_chunker = SentenceChunker(max_chunk_size=max_chunk_size)
+        self._fallback = FixedSizeChunker(chunk_size=max_chunk_size, overlap=50)
+
+    async def chunk_async(self, document: Document) -> list[Chunk]:
+        text = document.content.strip()
+        if not text:
+            return []
+        # Same sentence regex as SentenceChunker.chunk (kept as a stored helper per spec).
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+        if not sentences:
+            return []
+        vecs = await self.embedder.embed_batch(sentences)
+        if all(v is None for v in vecs):
+            # Embedder unavailable -> degrade to size-based sentence chunking.
+            return self._sentence_chunker.chunk(document)
+
+        groups: list[str] = []
+        buffer: list[str] = []
+        buffer_len = 0
+        prev_vec: list[float] | None = None
+
+        # embed_batch returns one vector per sentence; strict=False tolerates a mis-sized batch.
+        for sentence, vec in zip(sentences, vecs, strict=False):
+            merge = (
+                vec is not None
+                and bool(buffer)
+                and prev_vec is not None
+                and _cosine(prev_vec, vec) >= self.threshold
+                and buffer_len + len(sentence) + 1 < self.max_chunk_size
+            )
+            if merge:
+                buffer.append(sentence)
+                buffer_len += len(sentence) + 1
+                prev_vec = vec
+                continue
+            if buffer:
+                groups.append(" ".join(buffer))
+                buffer = []
+                buffer_len = 0
+            buffer.append(sentence)
+            buffer_len += len(sentence) + 1
+            prev_vec = vec
+        if buffer:
+            groups.append(" ".join(buffer))
+
+        # Hard-cap any oversized group via FixedSizeChunker (mirrors ParagraphChunker).
+        chunks: list[Chunk] = []
+        index = 0
+        for content in groups:
+            if len(content) <= self.max_chunk_size:
+                chunks.append(self._make_chunk(document.id, index, content))
+                index += 1
+            else:
+                sub_doc = Document(id=document.id, title="", content=content)
+                for sub in self._fallback.chunk(sub_doc):
+                    sub.metadata["chunk_index"] = index
+                    sub.id = f"{document.id}_c{index}"
+                    chunks.append(sub)
+                    index += 1
+        return chunks
+
+    def chunk(self, document: Document) -> list[Chunk]:
+        return _run_sync(self.chunk_async(document))
 
 
 def resolve_chunker(name: str) -> BaseChunker:

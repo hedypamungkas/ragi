@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rag-workbench"
-version = "0.4.0"
+version = "0.5.0"
 description = "Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -47,6 +47,10 @@ vector-faiss = ["faiss-cpu>=1.7"]
 mcp = ["mcp>=1.0"]
 adapters-langchain = ["langchain-core>=0.2"]
 adapters-llamaindex = ["llama-index>=0.10"]
+# v0.5
+rag-cloud = ["boto3>=1.34"]
+vectorstore-chroma = ["chromadb>=0.5"]
+vectorstore-pgvector = ["psycopg[binary]>=3.1"]
 
 [project.scripts]
 ragwb = "ragworkbench.workbench.cli:main"

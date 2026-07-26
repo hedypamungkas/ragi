@@ -231,8 +231,10 @@ def _load_documents(conf: dict[str, Any]) -> tuple[BaseChunker, list[Chunk]]:
     Each ``documents[]`` entry selects a source:
 
     - ``{path: "..."}`` or a bare string -- local file / glob / directory (recursed).
-    - ``{source: http, url: "..."}`` -- fetch over HTTP(S) via httpx (v0.1: read-only fetch).
-    - ``{source: s3, ...}`` / ``{source: firecrawl, ...}`` -- v0.2+ (ragworkbench.ingest.sources).
+    - ``{source: http, url: "..."}`` -- fetch over HTTP(S) via httpx (hard dep).
+    - ``{source: s3, ...}`` -- S3/R2 via boto3 (``[rag-cloud]`` extra; raises
+      ``LLMInvalidRequestError`` at call time when boto3 is missing).
+    - ``{source: firecrawl, ...}`` -- site crawl via httpx (no extra).
 
     Fetched/loaded bytes are parsed by format via the parser registry; unreadable or
     oversized files are skipped. ``max_document_size_mb`` (default 10) bounds a single doc.
@@ -241,7 +243,12 @@ def _load_documents(conf: dict[str, Any]) -> tuple[BaseChunker, list[Chunk]]:
     from pathlib import Path as PathlibPath
 
     from ragworkbench.ingest.parsers import dispatch_parser
-    from ragworkbench.ingest.sources import DocumentCache, fetch_http_entry
+    from ragworkbench.ingest.sources import (
+        DocumentCache,
+        fetch_firecrawl_entry,
+        fetch_http_entry,
+        fetch_s3_entry,
+    )
     from ragworkbench.types import Document
 
     chunker = _build_chunker(conf)
@@ -287,10 +294,13 @@ def _load_documents(conf: dict[str, Any]) -> tuple[BaseChunker, list[Chunk]]:
         if source == "http" or "url" in entry:
             yield from fetch_http_entry(entry, doc_cache, max_bytes=max_bytes)
             return
-        _logger.warning(
-            "Unknown/unsupported document source %r in v0.1 (s3/firecrawl arrive v0.2); skipping",
-            source,
-        )
+        if source == "s3":
+            yield from fetch_s3_entry(entry, doc_cache, max_bytes=max_bytes)
+            return
+        if source == "firecrawl":
+            yield from fetch_firecrawl_entry(entry, doc_cache)
+            return
+        _logger.warning("Unknown/unsupported document source %r; skipping", source)
 
     max_mb = int(conf.get("max_document_size_mb", 10))
     max_bytes = max_mb * 1024 * 1024
@@ -347,7 +357,16 @@ def build_pipeline(
         _logger.warning("RAG enabled but no documents loaded")
         return None
 
-    retriever = _build_retriever(all_chunks, conf, embedder=embedder)
+    if conf.get("retriever") == "vectorstore":
+        # Composite retriever: build the store from `vectorstore:` config + wrap it.
+        # Not registered via the standard registry path (needs a store, not just kwargs).
+        from ragworkbench.retrieval.vectorstore_retriever import VectorStoreRetriever
+        from ragworkbench.vectorstore import build_store
+
+        store = build_store(conf.get("vectorstore") or {}, embedder=embedder)
+        retriever = VectorStoreRetriever(all_chunks, embedder=embedder, store=store)
+    else:
+        retriever = _build_retriever(all_chunks, conf, embedder=embedder)
 
     # Query-rewrite / HyDE wrapper -- runs BEFORE retrieval, so it sits OUTSIDE the rerank
     # wrapper (rewrite the query, then the rerank-wrapped retriever over-fetches + rescores).

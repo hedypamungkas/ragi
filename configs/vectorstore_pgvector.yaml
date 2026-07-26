@@ -1,0 +1,13 @@
+# VectorStore-backed retrieval with pgvector (Postgres + the vector extension).
+# Needs a running Postgres with `CREATE EXTENSION vector`, `pip install -e ".[vectorstore-pgvector]"`,
+# + an EmbeddingClient (programmatic).
+enabled: true
+chunker: paragraph
+retriever: vectorstore
+top_k: 10
+vectorstore:
+  backend: pgvector
+  dsn: postgres://user:pass@localhost:5432/rwb
+  table: rwb_chunks
+documents:
+  - path: data/ir_corpus

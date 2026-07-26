@@ -53,7 +53,7 @@ results = await retriever.retrieve("what is photosynthesis?", top_k=5)
 
 ## Status
 
-Alpha (v0.4). Phased roadmap — each slice ships a working closed loop + measured baseline:
+Alpha (v0.5). Phased roadmap — each slice ships a working closed loop + measured baseline:
 
 | Slice | Ships |
 |---|---|
@@ -61,7 +61,7 @@ Alpha (v0.4). Phased roadmap — each slice ships a working closed loop + measur
 | **v0.2** ✅ | semantic/hybrid + cross-encoder rerank (jina/cohere/local) + query-rewrite/HyDE + augmentation seam — all as composable Retriever wrappers |
 | **v0.3** ✅ | MCP server export (read-only) + tool-schema (MCP/OpenAI/Anthropic) + LangChain/LlamaIndex adapters |
 | **v0.4** ✅ | Mode B end-to-end eval (faithfulness NLI) + full 9-dim rubric + TyDi-id native baseline |
-| v0.5 | faiss/chroma/pgvector + SemanticChunker + s3/firecrawl + OpenAI/Claude tool adapters |
+| **v0.5** ✅ | VectorStore (memory/faiss/chroma/pgvector) + SemanticChunker + s3/firecrawl + OpenAI/Claude SDK adapters — **feature-complete** |
 
 ## Ship to any agent (v0.3)
 
@@ -120,6 +120,27 @@ rubric** weights faithfulness highest (0.18) > ranking (0.17) > correctness (0.1
 **TyDi-id native Indonesian baseline** (`--dataset tydi-id`, Mode A needs no key): natively-collected
 (not machine-translated) — BM25 recall@10 ≈ 0.97. Closes the translation-inflation caveat; the
 SEA-aware differentiator.
+
+## Scale + completeness (v0.5 — feature-complete)
+
+**VectorStore backends** — the scale path for >100k-chunk corpora (`SemanticRetriever` stays the
+in-memory-cosine path for smaller ones):
+
+```python
+rwb.build_pipeline({
+    "retriever": "vectorstore",
+    "vectorstore": {"backend": "faiss"},   # or chroma / pgvector / memory
+    "documents": [{"path": "data/corpus"}],
+}, embedder=OpenAIEmbeddingClient(api_key=...))
+```
+
+`memory` is always available; `faiss` (`[vector-faiss]`), `chroma` (`[vectorstore-chroma]`), and
+`pgvector` (`[vectorstore-pgvector]`) are import-gated. **SemanticChunker** (embedding-aware greedy
+merge), **s3/firecrawl** sources (`[rag-cloud]`), and **OpenAI/Claude SDK tool-call adapters**
+(`adapters/openai.py` + `adapters/anthropic.py` — for non-MCP SDK agents) round out the stack.
+
+v0.5 is the **capstone** — all 5 roadmap slices shipped. Next: v1.0 polish/release (CI, packaging,
+docs site).
 
 ## Design
 
