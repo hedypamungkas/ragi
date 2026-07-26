@@ -53,16 +53,54 @@ results = await retriever.retrieve("what is photosynthesis?", top_k=5)
 
 ## Status
 
-Alpha (v0.2). Phased roadmap — each slice ships a working closed loop + measured baseline:
+Alpha (v0.3). Phased roadmap — each slice ships a working closed loop + measured baseline:
 
 | Slice | Ships |
 |---|---|
 | **v0.1** ✅ | lexical retrieval (keyword/BM25) + retrieval-only eval (recall@k / MRR / nDCG / precision + bootstrap CI) + A/B compare + 9-dim rubric |
 | **v0.2** ✅ | semantic/hybrid + cross-encoder rerank (jina/cohere/local) + query-rewrite/HyDE + augmentation seam — all as composable Retriever wrappers |
-| v0.3 | MCP server export + LangChain/LlamaIndex adapters |
-| v0.3 | MCP server export + LangChain/LlamaIndex adapters |
+| **v0.3** ✅ | MCP server export (read-only) + tool-schema (MCP/OpenAI/Anthropic) + LangChain/LlamaIndex adapters |
 | v0.4 | end-to-end eval (faithfulness) + full 9-dim rubric + faiss + TyDi-id native |
 | v0.5 | chroma/pgvector + OpenAI/Claude adapters + s3/firecrawl sources |
+
+## Ship to any agent (v0.3)
+
+A tuned stack becomes a portable retrieval contract three ways:
+
+**1. MCP server** (Claude Desktop / Cursor / any MCP client) — one read-only `search` tool:
+
+```bash
+pip install -e ".[mcp]"
+ragwb serve configs/bm25_baseline.yaml --transport stdio
+```
+
+Claude Desktop `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "rag-workbench": {
+      "command": "ragwb",
+      "args": ["serve", "/abs/path/to/configs/bm25_baseline.yaml", "--transport", "stdio"]
+    }
+  }
+}
+```
+
+**2. Tool-schema** (OpenAI function-calling / Claude `tool_use`):
+
+```bash
+ragwb export-tool-schema --format openai      # or: mcp | anthropic | base
+```
+
+**3. Framework adapters** (LangChain / LlamaIndex):
+
+```python
+# pip install -e ".[adapters-langchain]"
+from ragworkbench.adapters.langchain import LangChainRetrieverAdapter
+lc = LangChainRetrieverAdapter(rwb_retriever=retriever, top_k=5)
+docs = lc.invoke("your query")   # -> list[langchain_core.documents.Document]
+```
 
 ## Design
 

@@ -32,7 +32,7 @@ from ragworkbench.registry import (
 )
 from ragworkbench.types import Chunk, Document, RetrievalResult
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 _BUILTINS_LOADED = False
 

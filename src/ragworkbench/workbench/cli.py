@@ -1,10 +1,12 @@
-"""ragworkbench/workbench/cli -- the ``ragwb`` command: ingest | eval | compare.
+"""ragworkbench/workbench/cli -- the ``ragwb`` command: ingest | eval | compare | serve | export-tool-schema.
 
 The closed-loop driver:
 
-    ragwb ingest <config>                      # validate config + index corpus + probe
-    ragwb eval <config> --dataset msmarco -n 120   # measure (Mode A, no API key)
-    ragwb compare <cfgA> <cfgB> --dataset msmarco --metric recall@10   # A/B iterate
+    ragwb ingest <config>                          # validate config + index corpus + probe
+    ragwb eval <config> --dataset msmarco -n 120    # measure (Mode A, no API key)
+    ragwb compare <cfgA> <cfgB> --metric recall@10  # A/B iterate
+    ragwb serve <config> --transport stdio          # ship as a read-only MCP server
+    ragwb export-tool-schema --format openai        # ship as an OpenAI/Claude tool spec
 """
 
 from __future__ import annotations
@@ -112,6 +114,35 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    """Serve a pipeline as a read-only MCP server (stdio default, or --transport http).
+
+    Needs the ``[mcp]`` extra. Lexical + rerank configs serve directly; semantic/hybrid
+    degrade to keyword (the CLI does not wire an embedder in v0.3).
+    """
+    from ragworkbench.export.mcp import serve_from_config
+
+    config = load_config(args.config)
+    serve_from_config(config, transport=args.transport, host=args.host, port=args.port)
+    return 0
+
+
+def cmd_export_tool_schema(args: argparse.Namespace) -> int:
+    """Print the search tool schema in the requested agent-calling format."""
+    from ragworkbench.export.toolschema import (
+        dumps,
+        search_tool_schema,
+        to_anthropic,
+        to_mcp,
+        to_openai,
+    )
+
+    spec = search_tool_schema()
+    out = {"mcp": to_mcp(spec), "openai": to_openai(spec), "anthropic": to_anthropic(spec), "base": spec}[args.format]
+    print(dumps(out))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ragwb", description="rag-workbench closed-loop CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -141,6 +172,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_cmp.add_argument("--metric", default="recall@10", help="e.g. recall@10, ndcg@10, mrr@10")
     p_cmp.add_argument("-n", type=int, default=None)
     p_cmp.set_defaults(func=cmd_compare)
+
+    p_serve = sub.add_parser("serve", help="serve a pipeline as a read-only MCP server")
+    p_serve.add_argument("config", help="path to pipeline YAML")
+    p_serve.add_argument(
+        "--transport", choices=["stdio", "http"], default="stdio", help="MCP transport (default stdio)"
+    )
+    p_serve.add_argument("--host", default="127.0.0.1", help="HTTP host (ignored for stdio)")
+    p_serve.add_argument("--port", type=int, default=8000, help="HTTP port (ignored for stdio)")
+    p_serve.set_defaults(func=cmd_serve)
+
+    p_exp = sub.add_parser("export-tool-schema", help="print the search tool schema (mcp/openai/anthropic)")
+    p_exp.add_argument("--format", choices=["mcp", "openai", "anthropic", "base"], default="base")
+    p_exp.set_defaults(func=cmd_export_tool_schema)
 
     return ap
 

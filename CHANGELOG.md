@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
+## [0.3.0] - 2026-07-26
+
+### Added — ship as a portable retrieval contract
+- **MCP server** (`export/mcp.py`, `[mcp]` extra): expose a tuned Retriever as a read-only
+  `search` tool via the official `mcp` SDK (FastMCP) — stdio (Claude Desktop/Cursor) +
+  Streamable HTTP. SAFE-by-construction (only a read tool → no risk gate). `ragwb serve
+  <config> --transport stdio|http`. Returns deterministic markdown with `[Source:]` citations.
+- **Tool-schema generator** (`export/toolschema.py`, no deps): `search_tool_schema()` +
+  `to_mcp` / `to_openai` / `to_anthropic` → wire the `search` tool into OpenAI function-calling
+  or Claude `tool_use` directly. `ragwb export-tool-schema --format ...`.
+- **Framework adapters**: `adapters/langchain.py` (`LangChainRetrieverAdapter`,
+  `[adapters-langchain]`, sync + async) + `adapters/llamaindex.py` (`[adapters-llamaindex]`,
+  import-gated).
+- +9 tests (75 total, ruff clean): toolschema shape (no dep), a **real `mcp` client→server
+  stdio round-trip** (protocol-compatible with Claude Desktop by construction), langchain
+  adapter invoke/ainvoke, llamaindex import-gate.
+
+### Notes
+- `mcp` SDK validated at 1.28.1; langchain-core 1.4.9 still uses the v0
+  `_get_relevant_documents` contract (both sync + async paths implemented).
+- `ragwb serve` does not wire an embedder (v0.3) → semantic/hybrid configs degrade to keyword
+  over MCP; lexical + rerank configs serve directly. HTTP transport is localhost/no-auth
+  (production remote needs a Bearer reverse-proxy, documented).
+- llama-index is heavy and not installed in CI → the LlamaIndex adapter is import-gate-tested
+  only; validate with `pip install 'ragworkbench[adapters-llamaindex]'` when adopting.
+
 ## [0.2.0] - 2026-07-26
 
 ### Added — "beats the baseline" stages
