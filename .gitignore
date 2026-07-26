@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Generated corpora / data (license-light; never commit MS MARCO passage text)
+data/
+.benchmarks/
+evals/fixtures/*.json
+!evals/fixtures/.gitkeep
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

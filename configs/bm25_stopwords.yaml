@@ -1,0 +1,11 @@
+# BM25 + English stopword removal (A/B foil vs the plain baseline).
+# Run:  ragwb compare configs/bm25_baseline.yaml configs/bm25_stopwords.yaml --dataset msmarco --metric recall@10
+enabled: true
+chunker: paragraph
+retriever: bm25
+top_k: 10
+k1: 1.5
+b: 0.75
+stopwords: true
+documents:
+  - path: data/ir_corpus

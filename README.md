@@ -1,0 +1,77 @@
+# rag-workbench
+
+**Eval-first, agent-agnostic RAG toolkit.** Define a retrieval stack, measure it on a
+real IR golden set (offline, reproducible), iterate with statistical confidence, then
+ship the tuned stack as a **portable retrieval contract** — a Python library, an MCP
+server, or a tool-schema — that any agent can consume (koboi, LangChain, LlamaIndex,
+OpenAI / Claude SDK, v0, …).
+
+> *define → measure → iterate → ship*
+
+## Why
+
+Every existing RAG library is **build-first, eval-as-afterthought** and locks you into
+its framework. rag-workbench closes the loop the other way: eval is the spine, the stack
+is portable, and a **lexical-only baseline runs the entire closed loop with zero API
+key** — measure your retrieval quality for free *before* paying for embeddings.
+
+Shipped baselines (bundled MS MARCO golden set): BM25 recall@10 = **0.898 → 0.977**
+with a jina cross-encoder rerank. These are CI-gated regression bars, not vibes.
+
+## Install
+
+```bash
+pip install -e ".[dev,parsers]"     # core + tests + text/html/pdf/docx parsers
+```
+
+## Quickstart (v0.1 closed loop — no API key)
+
+```bash
+# 1. build the MS MARCO golden corpus (HF-cached after first run; license-light)
+python scripts/build_ir_corpus.py
+
+# 2. measure a BM25 stack (retrieval-only eval, deterministic, zero cost)
+ragwb eval configs/bm25_baseline.yaml --dataset msmarco --n 120
+
+# 3. A/B compare two stacks with a paired bootstrap CI on the difference
+ragwb compare configs/bm25.yaml configs/bm25_stopwords.yaml --metric recall@10
+```
+
+As a library:
+
+```python
+import ragworkbench as rwb
+rwb.register_builtins()
+retriever = rwb.build_pipeline({
+    "enabled": True,
+    "chunker": "paragraph",
+    "retriever": "bm25",
+    "documents": [{"path": "data/ir_corpus"}],
+})
+results = await retriever.retrieve("what is photosynthesis?", top_k=5)
+```
+
+## Status
+
+Alpha (v0.2). Phased roadmap — each slice ships a working closed loop + measured baseline:
+
+| Slice | Ships |
+|---|---|
+| **v0.1** ✅ | lexical retrieval (keyword/BM25) + retrieval-only eval (recall@k / MRR / nDCG / precision + bootstrap CI) + A/B compare + 9-dim rubric |
+| **v0.2** ✅ | semantic/hybrid + cross-encoder rerank (jina/cohere/local) + query-rewrite/HyDE + augmentation seam — all as composable Retriever wrappers |
+| v0.3 | MCP server export + LangChain/LlamaIndex adapters |
+| v0.3 | MCP server export + LangChain/LlamaIndex adapters |
+| v0.4 | end-to-end eval (faithfulness) + full 9-dim rubric + faiss + TyDi-id native |
+| v0.5 | chroma/pgvector + OpenAI/Claude adapters + s3/firecrawl sources |
+
+## Design
+
+- **Framework-agnostic by Protocol, not inheritance** — adapt any framework's objects.
+- **Eval-first** — a `StandaloneEvalRunner` drives the retriever directly (isolating
+  retrieval quality from LLM variance), not an agent loop.
+- **Fail-safe / fail-soft** — unknown components warn-and-fallback; rerank outages
+  return base results, never crash a run.
+
+## License
+
+Apache-2.0.

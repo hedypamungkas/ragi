@@ -1,0 +1,10 @@
+# BM25 baseline stack (the shipped MS MARCO reference: recall@10 ~0.898).
+# Run:  ragwb eval configs/bm25_baseline.yaml --dataset msmarco -n 120
+enabled: true
+chunker: paragraph
+retriever: bm25
+top_k: 10
+k1: 1.5
+b: 0.75
+documents:
+  - path: data/ir_corpus

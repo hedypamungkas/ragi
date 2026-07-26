@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-workbench"
+version = "0.2.0"
+description = "Eval-first, agent-agnostic RAG toolkit -- define, measure, iterate, ship as a portable retrieval contract (Python lib / MCP server) any agent consumes."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Hedy Pamungkas", email = "hedypamungkas@gmail.com"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
+]
+keywords = ["rag", "retrieval", "evaluation", "mcp", "search", "embeddings", "bm25", "agent-agnostic"]
+dependencies = [
+    "httpx>=0.25",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# v0.1
+parsers = ["pypdf>=4.0", "python-docx>=1.1", "pdfplumber>=0.11"]
+indo-nlp = ["Sastrawi>=1.0.1"]
+eval = ["datasets>=2.14"]
+dev = [
+    "pytest>=7",
+    "pytest-asyncio>=0.23",
+    "pytest-cov",
+    "ruff>=0.4",
+]
+# v0.2+ (declared now, exercised in later slices)
+rerank-local = ["sentence-transformers>=2.7"]
+vector-faiss = ["faiss-cpu>=1.7"]
+mcp = ["mcp>=1.0"]
+adapters-langchain = ["langchain-core>=0.2"]
+adapters-llamaindex = ["llama-index>=0.10"]
+
+[project.scripts]
+ragwb = "ragworkbench.workbench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/hedypamungkas/rag-workbench"
+Documentation = "https://github.com/hedypamungkas/rag-workbench#readme"
+Issues = "https://github.com/hedypamungkas/rag-workbench/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ASYNC", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "--cov=ragworkbench --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 70
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

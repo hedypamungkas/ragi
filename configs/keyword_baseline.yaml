@@ -1,0 +1,7 @@
+# Keyword (TF-IDF cosine) baseline stack.
+enabled: true
+chunker: paragraph
+retriever: keyword
+top_k: 10
+documents:
+  - path: data/ir_corpus

@@ -1,0 +1,10 @@
+# Embedding (semantic) retrieval -- needs an EmbeddingClient passed programmatically
+# (the CLI does not wire one in v0.2). Use as a library:
+#   from ragworkbench.embeddings.openai import OpenAIEmbeddingClient
+#   r = rwb.build_pipeline(config, embedder=OpenAIEmbeddingClient(api_key=...))
+enabled: true
+chunker: paragraph
+retriever: semantic
+top_k: 10
+documents:
+  - path: data/ir_corpus
