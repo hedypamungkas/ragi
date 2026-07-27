@@ -13,6 +13,7 @@ venv/
 .coverage
 .coverage.*
 htmlcov/
+coverage.xml
 .ruff_cache/
 .mypy_cache/
 

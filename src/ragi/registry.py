@@ -231,10 +231,10 @@ def _load_documents(conf: dict[str, Any]) -> tuple[BaseChunker, list[Chunk]]:
     Each ``documents[]`` entry selects a source:
 
     - ``{path: "..."}`` or a bare string -- local file / glob / directory (recursed).
-    - ``{source: http, url: "..."}`` -- fetch over HTTP(S) via httpx (hard dep).
+    - ``{source: http, url: "..."}`` (or ``https``) -- fetch over HTTP(S) via httpx.
     - ``{source: s3, ...}`` -- S3/R2 via boto3 (``[rag-cloud]`` extra; raises
       ``LLMInvalidRequestError`` at call time when boto3 is missing).
-    - ``{source: firecrawl, ...}`` -- site crawl via httpx (no extra).
+    - ``{source: firecrawl, url: "..."}`` -- site crawl via httpx (no extra).
 
     Fetched/loaded bytes are parsed by format via the parser registry; unreadable or
     oversized files are skipped. ``max_document_size_mb`` (default 10) bounds a single doc.
@@ -291,7 +291,11 @@ def _load_documents(conf: dict[str, Any]) -> tuple[BaseChunker, list[Chunk]]:
                     except OSError as exc:
                         _logger.warning("RAG: skipping unreadable file %s: %s", fp, exc)
             return
-        if source == "http" or "url" in entry:
+        # Route on the EXPLICIT source so a realistic firecrawl/s3 entry (which carries
+        # a ``url``) reaches its own fetcher instead of the generic HTTP one. (Previously
+        # the predicate was ``source == "http" or "url" in entry``, which misrouted any
+        # url-bearing firecrawl/s3 entry to the HTTP fetcher before its branch ran.)
+        if source in ("http", "https"):
             yield from fetch_http_entry(entry, doc_cache, max_bytes=max_bytes)
             return
         if source == "s3":

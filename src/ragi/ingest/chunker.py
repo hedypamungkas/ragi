@@ -248,7 +248,13 @@ class SemanticChunker(BaseChunker):
             return []
         vecs = await self.embedder.embed_batch(sentences)
         if all(v is None for v in vecs):
-            # Embedder unavailable -> degrade to size-based sentence chunking.
+            # Embedder unavailable -> degrade to size-based sentence chunking. Fail-soft but
+            # OBSERVABLE (warns), matching the retriever/reranker/rewriter seams that stamp a
+            # marker: a silent degradation here would corrupt evals comparing chunkers.
+            _logger.warning(
+                "SemanticChunker: embedder returned all-None vectors for %r; degrading to sentence chunking.",
+                getattr(document, "id", "<unknown>"),
+            )
             return self._sentence_chunker.chunk(document)
 
         groups: list[str] = []
