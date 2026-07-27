@@ -87,22 +87,30 @@ addopts = "--cov=ragi --cov-report=term-missing"
 [tool.coverage.run]
 source = ["src"]
 branch = true
+# Benign: the ragi package namespace is imported during collection, but its __init__.py
+# is omitted (above) -> coverage emits "module-not-measured". Suppress that single noise
+# warning; it does not affect any measured number.
+disable_warnings = ["module-not-measured"]
 omit = [
   "*/__init__.py",
-  # Import-gated optional backends -- their deps (faiss/chroma/psycopg) are absent in CI,
-  # so these files have no executable branches there. They're import-gated + documented;
-  # the VectorStore Protocol + memory impl (fully tested) prove the contract.
+  # Import-gated optional backends -- their deps (faiss/chroma/psycopg/llama-index/langchain-core)
+  # are absent in CI, so these files raise ImportError at module load and have no executable
+  # branches there. They're import-gated + documented; the langchain/llamaindex adapters are
+  # exercised by importorskip integration tests when the extra IS installed, and the VectorStore
+  # Protocol + memory impl (fully tested) prove the vectorstore contract.
   "src/ragi/vectorstore/faiss.py",
   "src/ragi/vectorstore/chroma.py",
   "src/ragi/vectorstore/pgvector.py",
   "src/ragi/adapters/llamaindex.py",
+  "src/ragi/adapters/langchain.py",
 ]
 
 [tool.coverage.report]
-# Ratcheting floor: post-omit (import-gated backends excluded) the suite covers ~64%. Set
-# below-current with a buffer so CI stays green; ratchet UP as tests grow (target ~80% over
-# v1.x). Do NOT raise above the measured level or CI goes red.
-fail_under = 60
+# Ratcheting floor (the CI quality gate): the suite covers ~95% post-omit. Set to 90 as the
+# baseline -- a meaningful bar (catches real coverage regressions) with ~5% buffer so CI stays
+# green under normal churn. Ratchet UP toward the measured level over time; do NOT raise above
+# the measured coverage or CI goes red.
+fail_under = 90
 precision = 2
 exclude_lines = [
     "pragma: no cover",

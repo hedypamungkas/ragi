@@ -40,7 +40,7 @@ jobs:
       - name: pytest (coverage gate on the Linux/3.12 cell only)
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-latest" ] && [ "${{ matrix.python-version }}" = "3.12" ]; then
-            pytest --cov=ragi --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+            pytest --cov=ragi --cov-report=term-missing --cov-report=xml --cov-fail-under=90
           else
             pytest
           fi
