@@ -9,13 +9,13 @@ before opening a PR.
 pip install -e ".[dev]"
 ruff check src/ tests/ scripts/          # HARD
 ruff format --check src/ tests/ scripts/ # HARD
-pytest --cov=ragi --cov-fail-under=60   # HARD (ratcheting floor; see pyproject)
+pytest --cov=ragi --cov-fail-under=90   # HARD (ratcheting floor; see pyproject)
 bandit -r src/ -c pyproject.toml         # HARD (no HIGH/CRITICAL)
 mypy src/ragi                    # SOFT (Protocol-heavy; promote later)
 ```
 
-Coverage is a **ratcheting floor** (~64% today, gated at 60%): don't lower it, raise it as you
-add tests. Optional backends (`vectorstore/{faiss,chroma,pgvector}.py`, `adapters/llamaindex.py`)
+Coverage is a **ratcheting floor** (~95% today, gated at 90%): don't lower it, raise it as you
+add tests. Optional backends (`vectorstore/{faiss,chroma,pgvector}.py`, `adapters/{llamaindex,langchain}.py`)
 are `omit`-ed from coverage (import-gated; their deps aren't installed in CI).
 
 ## Extending the toolkit

@@ -37,7 +37,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e ".[dev]"
-      - name: pytest (coverage gate on the Linux/3.12 cell only)
+      - name: pytest (coverage gate runs on all cells; xml report + upload on Linux/3.12 only)
+        # ``fail_under = 90`` lives in [tool.coverage.report] (pyproject.toml), and
+        # ``addopts = "--cov=ragi ..."`` applies to every cell, so the 90% gate is enforced
+        # on the WHOLE matrix (verified: plain ``pytest`` reports "Required test coverage of
+        # 90.0% reached"). The Linux/3.12 cell additionally emits coverage.xml for the Codecov
+        # upload below; its explicit ``--cov-fail-under=90`` is belt-and-suspenders.
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-latest" ] && [ "${{ matrix.python-version }}" = "3.12" ]; then
             pytest --cov=ragi --cov-report=term-missing --cov-report=xml --cov-fail-under=90
