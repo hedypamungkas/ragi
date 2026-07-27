@@ -153,6 +153,15 @@ class TestLoadDocuments:
         _chunker, chunks = _load_documents({"documents": [{"source": "http", "url": "http://x"}]})
         assert chunks and "web content" in chunks[0].content
 
+    def test_https_source_routes_to_http_fetcher(self, monkeypatch):
+        import ragi.ingest.sources as src
+
+        monkeypatch.setattr(
+            src, "fetch_http_entry", lambda entry, cache, max_bytes: iter([("web.txt", b"https content")])
+        )
+        _chunker, chunks = _load_documents({"documents": [{"source": "https", "url": "https://x"}]})
+        assert chunks and "https content" in chunks[0].content
+
     def test_s3_source(self, monkeypatch):
         import ragi.ingest.sources as src
 
@@ -165,14 +174,40 @@ class TestLoadDocuments:
     def test_firecrawl_source(self, monkeypatch):
         import ragi.ingest.sources as src
 
-        # NOTE: ``_load_documents`` dispatches on ``source == "http" or "url" in entry``,
-        # so a url-bearing firecrawl entry routes to HTTP first. The firecrawl branch is
-        # only reached for a url-less ``source: firecrawl`` entry (the fetch mock ignores
-        # the entry and yields content either way).
+        # url-less firecrawl entry: reaches the firecrawl branch directly (the real
+        # ``fetch_firecrawl_entry`` early-returns without a seed url, so the mock stands
+        # in here just to prove the branch wiring).
         monkeypatch.setattr(
             src, "fetch_firecrawl_entry", lambda entry, cache: iter([("page", b"crawled page content")])
         )
         _chunker, chunks = _load_documents({"documents": [{"source": "firecrawl"}]})
+        assert chunks and "crawled page" in chunks[0].content
+
+    def test_firecrawl_url_entry_routes_to_firecrawl_not_http(self, monkeypatch):
+        # Regression: a realistic url-bearing firecrawl entry must reach the firecrawl
+        # fetcher, not the generic HTTP fetcher. Previously the dispatch predicate
+        # ``source == "http" or "url" in entry`` misrouted it to HTTP before the firecrawl
+        # branch was ever reached. This test fails on that bug and passes once the
+        # explicit-source routing is checked before the ``url``-shorthand fallback.
+        import ragi.ingest.sources as src
+
+        calls: dict[str, list[dict]] = {"http": [], "firecrawl": []}
+
+        def _spy_http(entry, cache, *, max_bytes):
+            calls["http"].append(entry)
+            return iter([])
+
+        def _spy_firecrawl(entry, cache):
+            calls["firecrawl"].append(entry)
+            return iter([("page", b"crawled page content")])
+
+        monkeypatch.setattr(src, "fetch_http_entry", _spy_http)
+        monkeypatch.setattr(src, "fetch_firecrawl_entry", _spy_firecrawl)
+
+        _chunker, chunks = _load_documents(
+            {"documents": [{"source": "firecrawl", "url": "https://site.example", "api_key": "k"}]}
+        )
+        assert calls["firecrawl"] and calls["http"] == []
         assert chunks and "crawled page" in chunks[0].content
 
     def test_unsupported_source_warns(self, caplog):
