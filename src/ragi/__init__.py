@@ -32,7 +32,7 @@ from ragi.registry import (
 )
 from ragi.types import Chunk, Document, RetrievalResult
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 _BUILTINS_LOADED = False
 

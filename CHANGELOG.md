@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 (pre-1.0: minor may include breaking changes).
 
+## [1.0.1] - 2026-07-27
+
+### Added
+- `ragi --version` flag (top-level argparse `version` action; prints `ragi <version>` and exits
+  0). Previously `ragi --version` fell through to the subcommand-required usage error.
+
+### Internal
+- Test-hardening pass (PR #6, `worktree-test-hardening-coverage`): +~3000 LOC of new
+  unit/integration tests, lifting coverage 63.79% → **94.71%** and the
+  `[tool.coverage.report] fail_under` gate 60 → **90**.
+- `chunker.py` / `registry.py` / `augmentation.py`: fail-soft paths made observable and
+  previously-non-asserting tests tightened — no behavior change for consumers.
+
+> Note: `test_missing_mcp_sdk_raises` and `test_id_without_extra_warns_and_disables` assert on
+> the *absence* of optional deps (`[mcp]`, `[indo-nlp]`). They pass in CI (which installs only
+> `.[dev]`) but can fail in a venv where those extras ARE installed — environment drift, not a
+> regression.
+
 ## [1.0.0] - 2026-07-27
 
 ### Rebrand — rag-workbench → ragi
