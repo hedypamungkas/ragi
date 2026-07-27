@@ -212,8 +212,12 @@ class TestSemanticRetriever:
         r = SemanticRetriever(CHUNKS, embedder=_VecEmbedder())
         r._query_cache_size = 1
         await r.retrieve("python")  # fills the 1-slot query cache
-        await r.retrieve("language")  # evicts "python"
-        # third distinct query exercises a cache-miss path post-eviction (no assert needed)
+        assert "python" in r._query_cache
+        await r.retrieve("language")  # evicts "python" (FIFO)
+        # The older key is gone, the newer one present, and the cache stays at the cap.
+        assert "python" not in r._query_cache
+        assert "language" in r._query_cache
+        assert len(r._query_cache) == 1
 
 
 # --------------------------------------------------------------------------- #

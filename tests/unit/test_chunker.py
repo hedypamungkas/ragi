@@ -140,10 +140,13 @@ class TestSemanticChunker:
     def test_empty_returns_empty(self):
         assert SemanticChunker(_FakeEmbedder([]), max_chunk_size=100).chunk(_doc("")) == []
 
-    def test_all_none_vecs_degrades_to_sentence_mode(self):
+    def test_all_none_vecs_degrades_to_sentence_mode(self, caplog):
         ch = SemanticChunker(_FakeEmbedder([None, None]), max_chunk_size=100)
-        chunks = ch.chunk(_doc("first sentence. second sentence."))
+        with caplog.at_level("WARNING"):
+            chunks = ch.chunk(_doc("first sentence. second sentence."))
         assert len(chunks) == 1 and chunks[0].content
+        # Fail-soft must be observable: the degradation emits a warning (not silent).
+        assert any("degrading to sentence chunking" in r.message for r in caplog.records)
 
     def test_merges_similar_adjacent_sentences(self):
         # identical vectors -> cosine 1.0 >= default threshold -> merged into one group

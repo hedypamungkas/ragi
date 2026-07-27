@@ -212,6 +212,12 @@ class OnTheFlyAugmentation(AugmentationStrategy):
             context = self._cache[user_content]
         else:
             context, _ = await self._retrieve_and_format(user_content)
+            # NOTE: the abstention marker is cached too. Emptiness is treated as
+            # deterministic for caching: current retrievers are deterministic (and
+            # SemanticRetriever falls back to keyword rather than returning []), so an
+            # empty result means "genuinely no match", not a transient failure. Revisit
+            # if a transient-empty retriever is ever added (its blips would cache as
+            # permanent abstention for a given user message).
             self._cache[user_content] = context
 
         if context == ABSTENTION_MARKER:

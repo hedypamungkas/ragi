@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from ragi.chat.openai import OpenAIChatClient
+from ragi.errors import LLMConnectionError, LLMRateLimitError
 
 
 class _FakeTransport:
@@ -59,3 +62,14 @@ class TestOpenAIChatClient:
         client._transport = t
         await client.close()
         assert t.closed is True
+
+    @pytest.mark.parametrize("exc", [LLMRateLimitError("429"), LLMConnectionError("boom")])
+    async def test_transport_error_propagates_uncaught(self, exc):
+        # Contract (module docstring): ``complete`` raises the ``LLM*`` hierarchy on
+        # transport errors so callers (runner / scorers) can catch and fail-soft. A
+        # future broad ``except`` swallowing this would make "transport died" look like
+        # "LLM answered empty" -- this pins the propagation.
+        client = OpenAIChatClient("k")
+        client._transport = _FakeTransport(exc=exc)
+        with pytest.raises(type(exc)):
+            await client.complete([{"role": "user", "content": "q"}])

@@ -10,7 +10,11 @@ from ragi.eval.scorers import BootstrapCIScorer, CitationScorer, RetrievalMetric
 
 @pytest.fixture(autouse=True)
 def _reset_registry():
-    # Each test starts from the default-registered scorers (imported at module load).
+    # Each test starts from a clean default-only registry. ``register_default_scorers``
+    # overwrites the default keys but doesn't ``clear()`` first, so a custom scorer
+    # registered by an earlier test (e.g. ``test_register_and_create_custom``) would
+    # leak into later tests without this.
+    ScorerRegistry.clear()
     register_default_scorers()
     yield
 

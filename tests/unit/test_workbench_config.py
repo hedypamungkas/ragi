@@ -20,6 +20,14 @@ class TestLoadConfig:
         cfg = load_config(f)
         assert cfg == {"enabled": True, "retriever": "keyword"}
 
+    def test_str_path_loads_same_as_path(self, tmp_path):
+        # A plain ``str`` path (the common CLI-flag shape) is accepted and behaves
+        # identically to a ``Path`` (both flow through ``Path(source)``).
+        f = tmp_path / "p.yaml"
+        f.write_text("enabled: true\nretriever: bm25\n", encoding="utf-8")
+        cfg = load_config(str(f))
+        assert cfg == {"enabled": True, "retriever": "bm25"}
+
     def test_non_mapping_yaml_raises(self, tmp_path):
         f = tmp_path / "list.yaml"
         f.write_text("- a\n- b\n", encoding="utf-8")

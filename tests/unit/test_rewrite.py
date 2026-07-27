@@ -19,7 +19,11 @@ CHUNKS = [Chunk("c1", "d1", "python is a popular programming language")]
 
 
 def test_rule_based_rewrite_is_deterministic_and_lowercased():
-    assert rule_based_rewrite("What is THE best Python?") == rule_based_rewrite("What is THE best Python?")
+    out = rule_based_rewrite("What is THE best Python?")
+    # Deterministic across calls...
+    assert out == rule_based_rewrite("What is THE best Python?")
+    # ...and the output is always fully lowercased.
+    assert out == out.lower()
 
 
 def test_rewriter_llm_mode_uses_chat_client():

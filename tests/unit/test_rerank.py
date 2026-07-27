@@ -242,15 +242,19 @@ class TestCrossEncoderRerankerBranches:
         assert len(res) >= 1  # falls back to base order
 
     async def test_out_of_range_index_skipped(self):
+        captured: list[str] = []
+
         class WeirdBackend(MockReranker):
             async def rerank(self, q, docs, top_n):  # noqa: ARG002
+                captured.extend(docs)
                 return [(99, 0.9), (0, 0.5)]
 
         wrapped = CrossEncoderReranker(KeywordRetriever(chunks=CHUNKS), WeirdBackend())
         res = await wrapped.retrieve("dogs loyal", top_k=2)
-        # index 99 dropped; the surviving result is the real index-0 chunk
-        assert all(0 <= i < len(CHUNKS) for i in [0])  # sanity
-        assert res and res[0].retrieval_method.startswith("rerank:mock(")
+        # index 99 is out of range -> dropped; only the valid index-0 base result survives.
+        assert len(res) == 1
+        assert res[0].chunk.content == captured[0]  # the surviving in-range result
+        assert res[0].retrieval_method.startswith("rerank:mock(")
 
     async def test_empty_base_returns_empty(self):
         wrapped = CrossEncoderReranker(KeywordRetriever(chunks=CHUNKS), MockReranker())
